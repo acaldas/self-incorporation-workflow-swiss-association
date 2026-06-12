@@ -1,0 +1,239 @@
+import { useState } from "react";
+import { DocumentToolbar } from "@powerhousedao/design-system/connect";
+import {
+  actions,
+  useSelectedSwissAssociationDocument,
+} from "document-models/swiss-association";
+import { WizardLayout } from "./components/WizardLayout.js";
+import { StepAssociationDetails } from "./components/StepAssociationDetails.js";
+import { StepMemberRegistry } from "./components/StepMemberRegistry.js";
+import { StepBoardSetup } from "./components/StepBoardSetup.js";
+import { StepFoundingMeeting } from "./components/StepFoundingMeeting.js";
+import { StepMultisigConfig } from "./components/StepMultisigConfig.js";
+import { StepArticlesOfAssociation } from "./components/StepArticlesOfAssociation.js";
+import { StepMultisigParticipationAgreement } from "./components/StepMultisigParticipationAgreement.js";
+import { StepFinalArchive } from "./components/StepFinalArchive.js";
+import { StepRegulationGA } from "./components/StepRegulationGA.js";
+import type { StageProgress } from "./components/ProgressSidebar.js";
+
+export default function Editor() {
+  const [document, dispatch] = useSelectedSwissAssociationDocument();
+  const [currentStep, setCurrentStep] = useState(1);
+
+  if (!document || !dispatch) {
+    return (
+      <div style={{ padding: "1rem", color: "#475569", fontSize: "0.875rem" }}>
+        Select a SwissAssociation document to open this editor.
+      </div>
+    );
+  }
+
+  const state = document.state.global;
+  const safeDispatch = dispatch;
+  const phaseAComplete =
+    state.aoaDocument?.isSigned === true &&
+    state.foundingMinutesDocument?.isSigned === true;
+  const mpaSigned = state.mpaDocument?.isSigned === true;
+
+  const maxStep = !state.stage2Started
+    ? 7
+    : phaseAComplete
+      ? mpaSigned
+        ? 9
+        : 8
+      : 7;
+
+  const stageProgress: StageProgress = {
+    detailsDone: !!(
+      state.nameEn &&
+      state.seatCity &&
+      state.registeredAddress &&
+      state.purposeEn
+    ),
+    membersDone: (state.members?.length ?? 0) >= 2,
+    boardDone: (state.boardMembers?.length ?? 0) >= 1,
+    aoaSigned: state.aoaDocument?.isSigned === true,
+    meetingRolesDone: !!(state.chairName && state.secretaryName),
+    minutesSigned: state.foundingMinutesDocument?.isSigned === true,
+    multisigConfigured: !!state.multisig,
+    mpaSigned: state.mpaDocument?.isSigned === true,
+    hasMultisig: !!state.multisig,
+  };
+
+  function handleStepClick(step: number) {
+    if (step <= maxStep) {
+      setCurrentStep(step);
+    }
+  }
+
+  function renderStep() {
+    switch (currentStep) {
+      case 1:
+        return (
+          <StepAssociationDetails
+            state={state}
+            dispatch={safeDispatch}
+            onNext={() => setCurrentStep(2)}
+          />
+        );
+      case 2:
+        return (
+          <StepMemberRegistry
+            state={state}
+            dispatch={safeDispatch}
+            onNext={() => setCurrentStep(3)}
+            onBack={() => setCurrentStep(1)}
+          />
+        );
+      case 3:
+        return (
+          <StepBoardSetup
+            state={state}
+            dispatch={safeDispatch}
+            onNext={() => setCurrentStep(4)}
+            onBack={() => setCurrentStep(2)}
+          />
+        );
+      case 4:
+        return (
+          <StepArticlesOfAssociation
+            state={state}
+            dispatch={safeDispatch}
+            onBack={() => setCurrentStep(3)}
+            onNext={() => setCurrentStep(5)}
+          />
+        );
+      case 5:
+        return (
+          <StepRegulationGA
+            state={state}
+            dispatch={safeDispatch}
+            onBack={() => setCurrentStep(4)}
+            onNext={() => setCurrentStep(6)}
+          />
+        );
+      case 6:
+        return (
+          <StepMultisigConfig
+            state={state}
+            dispatch={safeDispatch}
+            onNext={() => setCurrentStep(7)}
+            onBack={() => setCurrentStep(5)}
+          />
+        );
+      case 7:
+        return (
+          <StepFoundingMeeting
+            state={state}
+            dispatch={safeDispatch}
+            onNext={() => {
+              if (!state.stage2Started) {
+                safeDispatch(
+                  actions.startStage_2({ startedAt: new Date().toISOString() }),
+                );
+              }
+              setCurrentStep(8);
+            }}
+            onBack={() => setCurrentStep(6)}
+            onOpenAoa={() => setCurrentStep(4)}
+          />
+        );
+      case 8:
+        return (
+          <StepMultisigParticipationAgreement
+            state={state}
+            dispatch={safeDispatch}
+            onBack={() => setCurrentStep(7)}
+            onNext={() => setCurrentStep(9)}
+          />
+        );
+      case 9:
+        return (
+          <StepFinalArchive state={state} onBack={() => setCurrentStep(8)} />
+        );
+      default:
+        return null;
+    }
+  }
+
+  return (
+    <>
+      <DocumentToolbar />
+      <style>{`
+        .sw-input {
+          display: block;
+          width: 100%;
+          padding: 0.5rem 0.75rem;
+          font-size: 0.875rem;
+          line-height: 1.5;
+          color: #0f172a;
+          background-color: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.5rem;
+          transition: border-color 0.15s, box-shadow 0.15s;
+          outline: none;
+        }
+        .sw-input:focus {
+          border-color: #dc2626;
+          box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+        .sw-input::placeholder {
+          color: #94a3b8;
+        }
+        select.sw-input {
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 0.75rem center;
+          padding-right: 2.5rem;
+        }
+        .sw-btn-primary {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.5rem 1.25rem;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #fff;
+          background-color: #dc2626;
+          border: 1px solid #dc2626;
+          border-radius: 0.5rem;
+          cursor: pointer;
+          transition: background-color 0.15s;
+        }
+        .sw-btn-primary:hover:not(:disabled) {
+          background-color: #b91c1c;
+        }
+        .sw-btn-primary:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+        .sw-btn-secondary {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.5rem 1.25rem;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #475569;
+          background-color: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.5rem;
+          cursor: pointer;
+          transition: background-color 0.15s;
+        }
+        .sw-btn-secondary:hover {
+          background-color: #f8fafc;
+        }
+      `}</style>
+      <WizardLayout
+        currentStep={currentStep}
+        onStepClick={handleStepClick}
+        maxStep={maxStep}
+        stageProgress={stageProgress}
+      >
+        {renderStep()}
+      </WizardLayout>
+    </>
+  );
+}

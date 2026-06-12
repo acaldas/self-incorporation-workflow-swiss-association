@@ -101,9 +101,7 @@ function MilestoneCard({
       className="mt-2.5 rounded-lg px-2 py-1.5 flex items-center gap-1.5"
       style={{
         background: "#fefbf0",
-        border: milestone.reached
-          ? "1.5px solid #d4a92a"
-          : "1px solid #e8dba8",
+        border: milestone.reached ? "1.5px solid #d4a92a" : "1px solid #e8dba8",
         boxShadow: milestone.reached
           ? "0 0 8px rgba(212, 169, 42, 0.15)"
           : "none",
