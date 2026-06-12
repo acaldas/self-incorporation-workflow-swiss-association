@@ -296,8 +296,8 @@ export function ProgressSidebar({ progress }: { progress: StageProgress }) {
         style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}
       >
         <div className="flex gap-0.5">
-          {stages.map((s) => {
-            const st = getStageStatus(s, s.number - 1);
+          {stages.map((s, i) => {
+            const st = getStageStatus(s, i);
             return (
               <div
                 key={s.number}
