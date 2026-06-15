@@ -1,0 +1,392 @@
+import type { DocumentModelGlobalState } from "document-model";
+
+export const documentModel: DocumentModelGlobalState = {
+  id: "powerhouse/swiss-association",
+  name: "SwissAssociation",
+  author: {
+    name: "Powerhouse",
+    website: "https://www.powerhouse.inc/",
+  },
+  extension: "phsa",
+  description:
+    "Document model for incorporating a Swiss Non-profit Association (Verein) under Art. 60-79 ZGB. Tracks the full 3-phase lifecycle: Pre-Incorporation, Founding Meeting, and Multisig Setup.",
+  specifications: [
+    {
+      state: {
+        local: {
+          schema: "",
+          examples: [],
+          initialValue: "",
+        },
+        global: {
+          schema:
+            "enum PrimaryLanguage {\n  EN\n  DE\n}\n\nenum MemberType {\n  NATURAL_PERSON\n  LEGAL_ENTITY\n}\n\nenum PhaseStatus {\n  LOCKED\n  IN_PROGRESS\n  AWAITING_SIGNATURES\n  COMPLETE\n}\n\nenum Stage2DocumentType {\n  AOA\n  FOUNDING_MINUTES\n  MPA\n  REG_GA\n}\n\ntype AssociationMember {\n  id: OID!\n  type: MemberType!\n  name: String!\n  nationalityOrCountry: String!\n  residenceOrCity: String!\n  representative: String\n}\n\ntype MultisigConfig {\n  platform: String\n  address: String\n  keysTotal: Int\n  decisionQuorum: Int\n  privateChannel: String\n  availabilityThreshold: String\n  internalPolicyLink: String\n  multisigDate: Date\n  emergencyProcedures: String\n}\n\ntype PhaseRecord {\n  id: OID!\n  phaseNumber: Int!\n  name: String!\n  status: PhaseStatus!\n  documentsGenerated: Boolean!\n  documentsSigned: Boolean!\n  completedDate: Date\n}\n\ntype GeneratedStage2Document {\n  markdown: String\n  isSigned: Boolean\n  signedAt: DateTime\n  isLocked: Boolean\n}\n\ntype SwissAssociationState {\n  nameEn: String\n  nameDe: String\n  seatCity: String\n  seatCanton: String\n  registeredAddress: String\n  foundingDate: Date\n  fiscalYearEnd: String\n  membershipFee: String\n  primaryLanguage: PrimaryLanguage\n  purposeEn: String\n  purposeDe: String\n  members: [AssociationMember!]!\n  boardMembers: [AssociationMember!]\n  isPersonalunion: Boolean\n  chairName: String\n  chairRole: String\n  secretaryName: String\n  secretaryRole: String\n  multisig: MultisigConfig\n  stage2Started: Boolean\n  aoaDocument: GeneratedStage2Document\n  foundingMinutesDocument: GeneratedStage2Document\n  mpaDocument: GeneratedStage2Document\n  regGaDocument: GeneratedStage2Document\n  incorporationCompletedAt: DateTime\n  currentPhase: Int\n  phases: [PhaseRecord!]!\n  languageClauseNeedsUpdate: Boolean\n  belowRecommendedMemberCount: Boolean\n  registeredAddressConfirmed: Boolean\n  customNotes: [String!]!\n}",
+          examples: [],
+          initialValue:
+            '{"nameEn": null, "nameDe": null, "seatCity": "Zug", "seatCanton": "Canton Zug", "registeredAddress": null, "foundingDate": null, "fiscalYearEnd": "31 December", "membershipFee": "none", "primaryLanguage": "EN", "purposeEn": null, "purposeDe": null, "members": [], "boardMembers": null, "isPersonalunion": null, "chairName": null, "chairRole": null, "secretaryName": null, "secretaryRole": null, "multisig": null, "stage2Started": null, "aoaDocument": null, "foundingMinutesDocument": null, "mpaDocument": null, "regGaDocument": null, "incorporationCompletedAt": null, "currentPhase": 1, "phases": [{"id": "phase-1", "phaseNumber": 1, "name": "Pre-Incorporation", "status": "IN_PROGRESS", "documentsGenerated": false, "documentsSigned": false, "completedDate": null}, {"id": "phase-2", "phaseNumber": 2, "name": "Founding Meeting", "status": "LOCKED", "documentsGenerated": false, "documentsSigned": false, "completedDate": null}, {"id": "phase-3", "phaseNumber": 3, "name": "Multisig Setup", "status": "LOCKED", "documentsGenerated": false, "documentsSigned": false, "completedDate": null}], "languageClauseNeedsUpdate": true, "belowRecommendedMemberCount": null, "registeredAddressConfirmed": null, "customNotes": []}',
+        },
+      },
+      modules: [
+        {
+          id: "mod-association",
+          name: "association",
+          description:
+            "Operations for managing association identity, seat, purpose and fiscal details",
+          operations: [
+            {
+              id: "op-set-name",
+              name: "SET_ASSOCIATION_NAME",
+              description:
+                "Sets the association name in English and optionally German",
+              schema:
+                "input SetAssociationNameInput {\n  nameEn: String!\n  nameDe: String\n}",
+              template:
+                "Sets the association name in English and optionally German",
+              reducer:
+                "state.nameEn = action.input.nameEn;\nif (action.input.nameDe) state.nameDe = action.input.nameDe;",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-set-seat",
+              name: "SET_ASSOCIATION_SEAT",
+              description:
+                "Sets the registered seat and address of the association",
+              schema:
+                "input SetAssociationSeatInput {\n  seatCity: String!\n  seatCanton: String!\n  registeredAddress: String\n}",
+              template:
+                "Sets the registered seat and address of the association",
+              reducer:
+                "state.seatCity = action.input.seatCity;\nstate.seatCanton = action.input.seatCanton;\nif (action.input.registeredAddress) {\n  state.registeredAddress = action.input.registeredAddress;\n  state.registeredAddressConfirmed = true;\n}",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-set-founding-date",
+              name: "SET_FOUNDING_DATE",
+              description: "Sets the founding date of the association",
+              schema: "input SetFoundingDateInput {\n  foundingDate: Date!\n}",
+              template: "Sets the founding date of the association",
+              reducer: "state.foundingDate = action.input.foundingDate;",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-set-fiscal",
+              name: "SET_FISCAL_DETAILS",
+              description:
+                "Sets fiscal year end, membership fee, and primary language",
+              schema:
+                "input SetFiscalDetailsInput {\n  fiscalYearEnd: String\n  membershipFee: String\n  primaryLanguage: PrimaryLanguage\n}",
+              template:
+                "Sets fiscal year end, membership fee, and primary language",
+              reducer:
+                "if (action.input.fiscalYearEnd) state.fiscalYearEnd = action.input.fiscalYearEnd;\nif (action.input.membershipFee) state.membershipFee = action.input.membershipFee;\nif (action.input.primaryLanguage) state.primaryLanguage = action.input.primaryLanguage;",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-set-purpose",
+              name: "SET_PURPOSE",
+              description:
+                "Sets the association purpose in English and optionally German",
+              schema:
+                "input SetPurposeInput {\n  purposeEn: String!\n  purposeDe: String\n}",
+              template:
+                "Sets the association purpose in English and optionally German",
+              reducer:
+                "state.purposeEn = action.input.purposeEn;\nif (action.input.purposeDe) state.purposeDe = action.input.purposeDe;",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+          ],
+        },
+        {
+          id: "mod-members",
+          name: "members",
+          description: "Operations for managing founding members",
+          operations: [
+            {
+              id: "op-add-member",
+              name: "ADD_MEMBER",
+              description: "Adds a founding member to the association",
+              schema:
+                "input AddMemberInput {\n  id: OID!\n  type: MemberType!\n  name: String!\n  nationalityOrCountry: String!\n  residenceOrCity: String!\n  representative: String\n}",
+              template: "Adds a founding member to the association",
+              reducer:
+                "const member = {\n  id: action.input.id,\n  type: action.input.type,\n  name: action.input.name,\n  nationalityOrCountry: action.input.nationalityOrCountry,\n  residenceOrCity: action.input.residenceOrCity,\n  representative: action.input.representative || null,\n};\nstate.members.push(member);\nstate.belowRecommendedMemberCount = state.members.length < 3;\nupdatePersonalunionFlag(state);",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-update-member",
+              name: "UPDATE_MEMBER",
+              description: "Updates an existing founding member",
+              schema:
+                "input UpdateMemberInput {\n  id: OID!\n  type: MemberType\n  name: String\n  nationalityOrCountry: String\n  residenceOrCity: String\n  representative: String\n}",
+              template: "Updates an existing founding member",
+              reducer:
+                "const idx = state.members.findIndex((m) => m.id === action.input.id);\nif (idx === -1) throw new MemberNotFoundError(`Member ${action.input.id} not found`);\nconst member = state.members[idx];\nif (action.input.type) member.type = action.input.type;\nif (action.input.name) member.name = action.input.name;\nif (action.input.nationalityOrCountry) member.nationalityOrCountry = action.input.nationalityOrCountry;\nif (action.input.residenceOrCity) member.residenceOrCity = action.input.residenceOrCity;\nif (action.input.representative !== undefined && action.input.representative !== null) member.representative = action.input.representative;\nupdatePersonalunionFlag(state);",
+              errors: [
+                {
+                  id: "err-member-not-found-update",
+                  name: "MemberNotFoundError",
+                  code: "MEMBER_NOT_FOUND",
+                  description: "The specified member was not found",
+                  template: "",
+                },
+              ],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-remove-member",
+              name: "REMOVE_MEMBER",
+              description: "Removes a founding member",
+              schema: "input RemoveMemberInput {\n  id: OID!\n}",
+              template: "Removes a founding member",
+              reducer:
+                "const idx = state.members.findIndex((m) => m.id === action.input.id);\nif (idx === -1) throw new MemberNotFoundError(`Member ${action.input.id} not found`);\nstate.members.splice(idx, 1);\nstate.belowRecommendedMemberCount = state.members.length < 3;\nupdatePersonalunionFlag(state);",
+              errors: [
+                {
+                  id: "err-member-not-found-remove",
+                  name: "MemberNotFoundError",
+                  code: "MEMBER_NOT_FOUND",
+                  description: "The specified member was not found",
+                  template: "",
+                },
+              ],
+              examples: [],
+              scope: "global",
+            },
+          ],
+        },
+        {
+          id: "mod-board",
+          name: "board",
+          description:
+            "Operations for managing board members and meeting roles",
+          operations: [
+            {
+              id: "op-add-board",
+              name: "ADD_BOARD_MEMBER",
+              description: "Adds a board member",
+              schema:
+                "input AddBoardMemberInput {\n  id: OID!\n  type: MemberType!\n  name: String!\n  nationalityOrCountry: String!\n  residenceOrCity: String!\n  representative: String\n}",
+              template: "Adds a board member",
+              reducer:
+                "if (!state.boardMembers) state.boardMembers = [];\nconst boardMember = {\n  id: action.input.id,\n  type: action.input.type,\n  name: action.input.name,\n  nationalityOrCountry: action.input.nationalityOrCountry,\n  residenceOrCity: action.input.residenceOrCity,\n  representative: action.input.representative || null,\n};\nstate.boardMembers.push(boardMember);\nupdatePersonalunionFlag(state);",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-update-board",
+              name: "UPDATE_BOARD_MEMBER",
+              description: "Updates an existing board member",
+              schema:
+                "input UpdateBoardMemberInput {\n  id: OID!\n  type: MemberType\n  name: String\n  nationalityOrCountry: String\n  residenceOrCity: String\n  representative: String\n}",
+              template: "Updates an existing board member",
+              reducer:
+                "if (!state.boardMembers) state.boardMembers = [];\nconst idx = state.boardMembers.findIndex((m) => m.id === action.input.id);\nif (idx === -1) throw new BoardMemberNotFoundError(`Board member ${action.input.id} not found`);\nconst member = state.boardMembers[idx];\nif (action.input.type) member.type = action.input.type;\nif (action.input.name) member.name = action.input.name;\nif (action.input.nationalityOrCountry) member.nationalityOrCountry = action.input.nationalityOrCountry;\nif (action.input.residenceOrCity) member.residenceOrCity = action.input.residenceOrCity;\nif (action.input.representative !== undefined && action.input.representative !== null) member.representative = action.input.representative;\nupdatePersonalunionFlag(state);",
+              errors: [
+                {
+                  id: "err-board-not-found-update",
+                  name: "BoardMemberNotFoundError",
+                  code: "BOARD_MEMBER_NOT_FOUND",
+                  description: "The specified board member was not found",
+                  template: "",
+                },
+              ],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-remove-board",
+              name: "REMOVE_BOARD_MEMBER",
+              description: "Removes a board member",
+              schema: "input RemoveBoardMemberInput {\n  id: OID!\n}",
+              template: "Removes a board member",
+              reducer:
+                "if (!state.boardMembers) state.boardMembers = [];\nconst idx = state.boardMembers.findIndex((m) => m.id === action.input.id);\nif (idx === -1) throw new BoardMemberNotFoundError(`Board member ${action.input.id} not found`);\nstate.boardMembers.splice(idx, 1);\nupdatePersonalunionFlag(state);",
+              errors: [
+                {
+                  id: "err-board-not-found-remove",
+                  name: "BoardMemberNotFoundError",
+                  code: "BOARD_MEMBER_NOT_FOUND",
+                  description: "The specified board member was not found",
+                  template: "",
+                },
+              ],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-copy-members",
+              name: "COPY_FOUNDING_MEMBERS_TO_BOARD",
+              description:
+                "Copies all founding members to the board (Personalunion)",
+              schema:
+                "input CopyFoundingMembersToBoardInput {\n  confirm: Boolean!\n}",
+              template:
+                "Copies all founding members to the board (Personalunion)",
+              reducer:
+                "state.boardMembers = state.members.map((member) => ({\n  id: member.id,\n  type: member.type,\n  name: member.name,\n  nationalityOrCountry: member.nationalityOrCountry,\n  residenceOrCity: member.residenceOrCity,\n  representative: member.representative || null,\n}));\nupdatePersonalunionFlag(state);",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-set-roles",
+              name: "SET_MEETING_ROLES",
+              description:
+                "Sets chair and secretary names and roles for the founding meeting",
+              schema:
+                "input SetMeetingRolesInput {\n  chairName: String!\n  chairRole: String!\n  secretaryName: String!\n  secretaryRole: String!\n}",
+              template:
+                "Sets chair and secretary names and roles for the founding meeting",
+              reducer:
+                "state.chairName = action.input.chairName;\nstate.chairRole = action.input.chairRole;\nstate.secretaryName = action.input.secretaryName;\nstate.secretaryRole = action.input.secretaryRole;",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+          ],
+        },
+        {
+          id: "mod-multisig",
+          name: "multisig",
+          description: "Operations for configuring multisig wallet",
+          operations: [
+            {
+              id: "op-set-multisig",
+              name: "SET_MULTISIG_CONFIG",
+              description: "Sets the full multisig wallet configuration",
+              schema:
+                "input SetMultisigConfigInput {\n  platform: String!\n  address: String!\n  keysTotal: Int!\n  decisionQuorum: Int!\n  privateChannel: String\n  availabilityThreshold: String\n  internalPolicyLink: String\n  multisigDate: Date\n  emergencyProcedures: String\n}",
+              template: "Sets the full multisig wallet configuration",
+              reducer:
+                "state.multisig = {\n  platform: action.input.platform,\n  address: action.input.address,\n  keysTotal: action.input.keysTotal,\n  decisionQuorum: action.input.decisionQuorum,\n  privateChannel: action.input.privateChannel || null,\n  availabilityThreshold: action.input.availabilityThreshold || null,\n  internalPolicyLink: action.input.internalPolicyLink || null,\n  multisigDate: action.input.multisigDate || null,\n  emergencyProcedures: action.input.emergencyProcedures || null,\n};",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+          ],
+        },
+        {
+          id: "mod-documents",
+          name: "documents",
+          description:
+            "Operations for managing stage 2 document generation and signing",
+          operations: [
+            {
+              id: "op-start-stage2",
+              name: "START_STAGE_2",
+              description: "Marks stage 2 as started",
+              schema: "input StartStage_2Input {\n  startedAt: DateTime!\n}",
+              template: "Marks stage 2 as started",
+              reducer: "state.stage2Started = true;",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-set-doc-md",
+              name: "SET_STAGE2_DOCUMENT_MARKDOWN",
+              description: "Sets the markdown content for a stage 2 document",
+              schema:
+                "input SetStage2DocumentMarkdownInput {\n  documentType: Stage2DocumentType!\n  markdown: String!\n}",
+              template: "Sets the markdown content for a stage 2 document",
+              reducer:
+                'const target = action.input.documentType === "AOA" ? (state.aoaDocument || (state.aoaDocument = {markdown: null, isSigned: false, signedAt: null, isLocked: false})) : action.input.documentType === "FOUNDING_MINUTES" ? (state.foundingMinutesDocument || (state.foundingMinutesDocument = {markdown: null, isSigned: false, signedAt: null, isLocked: false})) : action.input.documentType === "REG_GA" ? (state.regGaDocument || (state.regGaDocument = {markdown: null, isSigned: false, signedAt: null, isLocked: false})) : (state.mpaDocument || (state.mpaDocument = {markdown: null, isSigned: false, signedAt: null, isLocked: false}));\nif (target.isLocked) return;\ntarget.markdown = action.input.markdown;',
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-mark-signed",
+              name: "MARK_STAGE2_DOCUMENT_SIGNED",
+              description: "Marks a stage 2 document as signed and locks it",
+              schema:
+                "input MarkStage2DocumentSignedInput {\n  documentType: Stage2DocumentType!\n  signedAt: DateTime!\n}",
+              template: "Marks a stage 2 document as signed and locks it",
+              reducer:
+                'const target = action.input.documentType === "AOA" ? (state.aoaDocument || (state.aoaDocument = {markdown: null, isSigned: false, signedAt: null, isLocked: false})) : action.input.documentType === "FOUNDING_MINUTES" ? (state.foundingMinutesDocument || (state.foundingMinutesDocument = {markdown: null, isSigned: false, signedAt: null, isLocked: false})) : action.input.documentType === "REG_GA" ? (state.regGaDocument || (state.regGaDocument = {markdown: null, isSigned: false, signedAt: null, isLocked: false})) : (state.mpaDocument || (state.mpaDocument = {markdown: null, isSigned: false, signedAt: null, isLocked: false}));\nif (target.isLocked) return;\ntarget.isSigned = true;\ntarget.signedAt = action.input.signedAt;\ntarget.isLocked = true;\nif (state.aoaDocument?.isSigned && state.foundingMinutesDocument?.isSigned && !state.incorporationCompletedAt) {\n  state.incorporationCompletedAt = action.input.signedAt;\n}',
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+          ],
+        },
+        {
+          id: "mod-workflow",
+          name: "workflow",
+          description:
+            "Operations for managing incorporation workflow phases and notes",
+          operations: [
+            {
+              id: "op-update-phase",
+              name: "UPDATE_PHASE_STATUS",
+              description: "Updates the status of a workflow phase",
+              schema:
+                "input UpdatePhaseStatusInput {\n  phaseNumber: Int!\n  status: PhaseStatus!\n  documentsGenerated: Boolean\n  documentsSigned: Boolean\n  completedDate: Date\n}",
+              template: "Updates the status of a workflow phase",
+              reducer:
+                "const phase = state.phases.find((p) => p.phaseNumber === action.input.phaseNumber);\nif (!phase) throw new PhaseNotFoundError(`Phase ${action.input.phaseNumber} not found`);\nphase.status = action.input.status;\nif (action.input.documentsGenerated !== undefined && action.input.documentsGenerated !== null) phase.documentsGenerated = action.input.documentsGenerated;\nif (action.input.documentsSigned !== undefined && action.input.documentsSigned !== null) phase.documentsSigned = action.input.documentsSigned;\nif (action.input.completedDate) phase.completedDate = action.input.completedDate;",
+              errors: [
+                {
+                  id: "err-phase-not-found-update",
+                  name: "PhaseNotFoundError",
+                  code: "PHASE_NOT_FOUND",
+                  description: "The specified phase was not found",
+                  template: "",
+                },
+              ],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-advance-phase",
+              name: "ADVANCE_PHASE",
+              description: "Completes current phase and advances to next",
+              schema: "input AdvancePhaseInput {\n  completedDate: Date!\n}",
+              template: "Completes current phase and advances to next",
+              reducer:
+                'const current = state.phases.find((p) => p.phaseNumber === state.currentPhase);\nif (!current) throw new PhaseNotFoundError(`Current phase ${state.currentPhase} not found`);\ncurrent.status = "COMPLETE";\ncurrent.completedDate = action.input.completedDate;\nconst next = state.phases.find((p) => p.phaseNumber === (state.currentPhase ?? 0) + 1);\nif (next) {\n  next.status = "IN_PROGRESS";\n  state.currentPhase = next.phaseNumber;\n}',
+              errors: [
+                {
+                  id: "err-phase-not-found-advance",
+                  name: "PhaseNotFoundError",
+                  code: "PHASE_NOT_FOUND",
+                  description: "The specified phase was not found",
+                  template: "",
+                },
+              ],
+              examples: [],
+              scope: "global",
+            },
+            {
+              id: "op-add-note",
+              name: "ADD_NOTE",
+              description: "Adds a custom note",
+              schema: "input AddNoteInput {\n  note: String!\n}",
+              template: "Adds a custom note",
+              reducer: "state.customNotes.push(action.input.note);",
+              errors: [],
+              examples: [],
+              scope: "global",
+            },
+          ],
+        },
+      ],
+      version: 1,
+      changeLog: [],
+    },
+  ],
+};

@@ -1,0 +1,251 @@
+scalar Unknown
+scalar DateTime
+scalar Attachment
+scalar Address
+scalar Amount_Tokens
+scalar EthereumAddress
+scalar EmailAddress
+scalar Amount_Percentage
+scalar Date
+scalar URL
+scalar Amount_Money
+scalar OLabel
+scalar Currency
+scalar PHID
+scalar OID
+scalar Amount_Fiat
+scalar Amount_Currency
+scalar Amount_Crypto
+scalar Amount
+scalar Upload
+
+enum PrimaryLanguage {
+  EN
+  DE
+}
+
+enum MemberType {
+  NATURAL_PERSON
+  LEGAL_ENTITY
+}
+
+enum PhaseStatus {
+  LOCKED
+  IN_PROGRESS
+  AWAITING_SIGNATURES
+  COMPLETE
+}
+
+enum Stage2DocumentType {
+  AOA
+  FOUNDING_MINUTES
+  MPA
+  REG_GA
+}
+
+type AssociationMember {
+  id: OID!
+  type: MemberType!
+  name: String!
+  nationalityOrCountry: String!
+  residenceOrCity: String!
+  representative: String
+}
+
+type MultisigConfig {
+  platform: String
+  address: String
+  keysTotal: Int
+  decisionQuorum: Int
+  privateChannel: String
+  availabilityThreshold: String
+  internalPolicyLink: String
+  multisigDate: Date
+  emergencyProcedures: String
+}
+
+type PhaseRecord {
+  id: OID!
+  phaseNumber: Int!
+  name: String!
+  status: PhaseStatus!
+  documentsGenerated: Boolean!
+  documentsSigned: Boolean!
+  completedDate: Date
+}
+
+type GeneratedStage2Document {
+  markdown: String
+  isSigned: Boolean
+  signedAt: DateTime
+  isLocked: Boolean
+}
+
+type SwissAssociationState {
+  nameEn: String
+  nameDe: String
+  seatCity: String
+  seatCanton: String
+  registeredAddress: String
+  foundingDate: Date
+  fiscalYearEnd: String
+  membershipFee: String
+  primaryLanguage: PrimaryLanguage
+  purposeEn: String
+  purposeDe: String
+  members: [AssociationMember!]!
+  boardMembers: [AssociationMember!]
+  isPersonalunion: Boolean
+  chairName: String
+  chairRole: String
+  secretaryName: String
+  secretaryRole: String
+  multisig: MultisigConfig
+  stage2Started: Boolean
+  aoaDocument: GeneratedStage2Document
+  foundingMinutesDocument: GeneratedStage2Document
+  mpaDocument: GeneratedStage2Document
+  regGaDocument: GeneratedStage2Document
+  incorporationCompletedAt: DateTime
+  currentPhase: Int
+  phases: [PhaseRecord!]!
+  languageClauseNeedsUpdate: Boolean
+  belowRecommendedMemberCount: Boolean
+  registeredAddressConfirmed: Boolean
+  customNotes: [String!]!
+}
+
+# association
+
+input SetAssociationNameInput {
+  nameEn: String!
+  nameDe: String
+}
+
+input SetAssociationSeatInput {
+  seatCity: String!
+  seatCanton: String!
+  registeredAddress: String
+}
+
+input SetFoundingDateInput {
+  foundingDate: Date!
+}
+
+input SetFiscalDetailsInput {
+  fiscalYearEnd: String
+  membershipFee: String
+  primaryLanguage: PrimaryLanguage
+}
+
+input SetPurposeInput {
+  purposeEn: String!
+  purposeDe: String
+}
+
+# members
+
+input AddMemberInput {
+  id: OID!
+  type: MemberType!
+  name: String!
+  nationalityOrCountry: String!
+  residenceOrCity: String!
+  representative: String
+}
+
+input UpdateMemberInput {
+  id: OID!
+  type: MemberType
+  name: String
+  nationalityOrCountry: String
+  residenceOrCity: String
+  representative: String
+}
+
+input RemoveMemberInput {
+  id: OID!
+}
+
+# board
+
+input AddBoardMemberInput {
+  id: OID!
+  type: MemberType!
+  name: String!
+  nationalityOrCountry: String!
+  residenceOrCity: String!
+  representative: String
+}
+
+input UpdateBoardMemberInput {
+  id: OID!
+  type: MemberType
+  name: String
+  nationalityOrCountry: String
+  residenceOrCity: String
+  representative: String
+}
+
+input RemoveBoardMemberInput {
+  id: OID!
+}
+
+input CopyFoundingMembersToBoardInput {
+  confirm: Boolean!
+}
+
+input SetMeetingRolesInput {
+  chairName: String!
+  chairRole: String!
+  secretaryName: String!
+  secretaryRole: String!
+}
+
+# multisig
+
+input SetMultisigConfigInput {
+  platform: String!
+  address: String!
+  keysTotal: Int!
+  decisionQuorum: Int!
+  privateChannel: String
+  availabilityThreshold: String
+  internalPolicyLink: String
+  multisigDate: Date
+  emergencyProcedures: String
+}
+
+# documents
+
+input StartStage_2Input {
+  startedAt: DateTime!
+}
+
+input SetStage2DocumentMarkdownInput {
+  documentType: Stage2DocumentType!
+  markdown: String!
+}
+
+input MarkStage2DocumentSignedInput {
+  documentType: Stage2DocumentType!
+  signedAt: DateTime!
+}
+
+# workflow
+
+input UpdatePhaseStatusInput {
+  phaseNumber: Int!
+  status: PhaseStatus!
+  documentsGenerated: Boolean
+  documentsSigned: Boolean
+  completedDate: Date
+}
+
+input AdvancePhaseInput {
+  completedDate: Date!
+}
+
+input AddNoteInput {
+  note: String!
+}

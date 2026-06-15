@@ -1,0 +1,363 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import * as z from "zod";
+import type {
+  AddBoardMemberInput,
+  AddMemberInput,
+  AddNoteInput,
+  AdvancePhaseInput,
+  AssociationMember,
+  CopyFoundingMembersToBoardInput,
+  GeneratedStage2Document,
+  MarkStage2DocumentSignedInput,
+  MemberType,
+  MultisigConfig,
+  PhaseRecord,
+  PhaseStatus,
+  PrimaryLanguage,
+  RemoveBoardMemberInput,
+  RemoveMemberInput,
+  SetAssociationNameInput,
+  SetAssociationSeatInput,
+  SetFiscalDetailsInput,
+  SetFoundingDateInput,
+  SetMeetingRolesInput,
+  SetMultisigConfigInput,
+  SetPurposeInput,
+  SetStage2DocumentMarkdownInput,
+  Stage2DocumentType,
+  StartStage_2Input,
+  SwissAssociationState,
+  UpdateBoardMemberInput,
+  UpdateMemberInput,
+  UpdatePhaseStatusInput,
+} from "./types.js";
+
+type Properties<T> = Required<{
+  [K in keyof T]: z.ZodType<T[K]>;
+}>;
+
+type definedNonNullAny = {};
+
+export const isDefinedNonNullAny = (v: any): v is definedNonNullAny =>
+  v !== undefined && v !== null;
+
+export const definedNonNullAnySchema = z
+  .any()
+  .refine((v) => isDefinedNonNullAny(v));
+
+export const MemberTypeSchema = z.enum(["LEGAL_ENTITY", "NATURAL_PERSON"]);
+
+export const PhaseStatusSchema = z.enum([
+  "AWAITING_SIGNATURES",
+  "COMPLETE",
+  "IN_PROGRESS",
+  "LOCKED",
+]);
+
+export const PrimaryLanguageSchema = z.enum(["DE", "EN"]);
+
+export const Stage2DocumentTypeSchema = z.enum([
+  "AOA",
+  "FOUNDING_MINUTES",
+  "MPA",
+  "REG_GA",
+]);
+
+export function AddBoardMemberInputSchema(): z.ZodObject<
+  Properties<AddBoardMemberInput>
+> {
+  return z.object({
+    id: z.string(),
+    name: z.string(),
+    nationalityOrCountry: z.string(),
+    representative: z.string().nullish(),
+    residenceOrCity: z.string(),
+    type: MemberTypeSchema,
+  });
+}
+
+export function AddMemberInputSchema(): z.ZodObject<
+  Properties<AddMemberInput>
+> {
+  return z.object({
+    id: z.string(),
+    name: z.string(),
+    nationalityOrCountry: z.string(),
+    representative: z.string().nullish(),
+    residenceOrCity: z.string(),
+    type: MemberTypeSchema,
+  });
+}
+
+export function AddNoteInputSchema(): z.ZodObject<Properties<AddNoteInput>> {
+  return z.object({
+    note: z.string(),
+  });
+}
+
+export function AdvancePhaseInputSchema(): z.ZodObject<
+  Properties<AdvancePhaseInput>
+> {
+  return z.object({
+    completedDate: z.iso.datetime(),
+  });
+}
+
+export function AssociationMemberSchema(): z.ZodObject<
+  Properties<AssociationMember>
+> {
+  return z.object({
+    __typename: z.literal("AssociationMember").optional(),
+    id: z.string(),
+    name: z.string(),
+    nationalityOrCountry: z.string(),
+    representative: z.string().nullish(),
+    residenceOrCity: z.string(),
+    type: MemberTypeSchema,
+  });
+}
+
+export function CopyFoundingMembersToBoardInputSchema(): z.ZodObject<
+  Properties<CopyFoundingMembersToBoardInput>
+> {
+  return z.object({
+    confirm: z.boolean(),
+  });
+}
+
+export function GeneratedStage2DocumentSchema(): z.ZodObject<
+  Properties<GeneratedStage2Document>
+> {
+  return z.object({
+    __typename: z.literal("GeneratedStage2Document").optional(),
+    isLocked: z.boolean().nullish(),
+    isSigned: z.boolean().nullish(),
+    markdown: z.string().nullish(),
+    signedAt: z.iso.datetime().nullish(),
+  });
+}
+
+export function MarkStage2DocumentSignedInputSchema(): z.ZodObject<
+  Properties<MarkStage2DocumentSignedInput>
+> {
+  return z.object({
+    documentType: Stage2DocumentTypeSchema,
+    signedAt: z.iso.datetime(),
+  });
+}
+
+export function MultisigConfigSchema(): z.ZodObject<
+  Properties<MultisigConfig>
+> {
+  return z.object({
+    __typename: z.literal("MultisigConfig").optional(),
+    address: z.string().nullish(),
+    availabilityThreshold: z.string().nullish(),
+    decisionQuorum: z.number().nullish(),
+    emergencyProcedures: z.string().nullish(),
+    internalPolicyLink: z.string().nullish(),
+    keysTotal: z.number().nullish(),
+    multisigDate: z.iso.datetime().nullish(),
+    platform: z.string().nullish(),
+    privateChannel: z.string().nullish(),
+  });
+}
+
+export function PhaseRecordSchema(): z.ZodObject<Properties<PhaseRecord>> {
+  return z.object({
+    __typename: z.literal("PhaseRecord").optional(),
+    completedDate: z.iso.datetime().nullish(),
+    documentsGenerated: z.boolean(),
+    documentsSigned: z.boolean(),
+    id: z.string(),
+    name: z.string(),
+    phaseNumber: z.number(),
+    status: PhaseStatusSchema,
+  });
+}
+
+export function RemoveBoardMemberInputSchema(): z.ZodObject<
+  Properties<RemoveBoardMemberInput>
+> {
+  return z.object({
+    id: z.string(),
+  });
+}
+
+export function RemoveMemberInputSchema(): z.ZodObject<
+  Properties<RemoveMemberInput>
+> {
+  return z.object({
+    id: z.string(),
+  });
+}
+
+export function SetAssociationNameInputSchema(): z.ZodObject<
+  Properties<SetAssociationNameInput>
+> {
+  return z.object({
+    nameDe: z.string().nullish(),
+    nameEn: z.string(),
+  });
+}
+
+export function SetAssociationSeatInputSchema(): z.ZodObject<
+  Properties<SetAssociationSeatInput>
+> {
+  return z.object({
+    registeredAddress: z.string().nullish(),
+    seatCanton: z.string(),
+    seatCity: z.string(),
+  });
+}
+
+export function SetFiscalDetailsInputSchema(): z.ZodObject<
+  Properties<SetFiscalDetailsInput>
+> {
+  return z.object({
+    fiscalYearEnd: z.string().nullish(),
+    membershipFee: z.string().nullish(),
+    primaryLanguage: PrimaryLanguageSchema.nullish(),
+  });
+}
+
+export function SetFoundingDateInputSchema(): z.ZodObject<
+  Properties<SetFoundingDateInput>
+> {
+  return z.object({
+    foundingDate: z.iso.datetime(),
+  });
+}
+
+export function SetMeetingRolesInputSchema(): z.ZodObject<
+  Properties<SetMeetingRolesInput>
+> {
+  return z.object({
+    chairName: z.string(),
+    chairRole: z.string(),
+    secretaryName: z.string(),
+    secretaryRole: z.string(),
+  });
+}
+
+export function SetMultisigConfigInputSchema(): z.ZodObject<
+  Properties<SetMultisigConfigInput>
+> {
+  return z.object({
+    address: z.string(),
+    availabilityThreshold: z.string().nullish(),
+    decisionQuorum: z.number(),
+    emergencyProcedures: z.string().nullish(),
+    internalPolicyLink: z.string().nullish(),
+    keysTotal: z.number(),
+    multisigDate: z.iso.datetime().nullish(),
+    platform: z.string(),
+    privateChannel: z.string().nullish(),
+  });
+}
+
+export function SetPurposeInputSchema(): z.ZodObject<
+  Properties<SetPurposeInput>
+> {
+  return z.object({
+    purposeDe: z.string().nullish(),
+    purposeEn: z.string(),
+  });
+}
+
+export function SetStage2DocumentMarkdownInputSchema(): z.ZodObject<
+  Properties<SetStage2DocumentMarkdownInput>
+> {
+  return z.object({
+    documentType: Stage2DocumentTypeSchema,
+    markdown: z.string(),
+  });
+}
+
+export function StartStage_2InputSchema(): z.ZodObject<
+  Properties<StartStage_2Input>
+> {
+  return z.object({
+    startedAt: z.iso.datetime(),
+  });
+}
+
+export function SwissAssociationStateSchema(): z.ZodObject<
+  Properties<SwissAssociationState>
+> {
+  return z.object({
+    __typename: z.literal("SwissAssociationState").optional(),
+    aoaDocument: z.lazy(() => GeneratedStage2DocumentSchema().nullish()),
+    belowRecommendedMemberCount: z.boolean().nullish(),
+    boardMembers: z.array(z.lazy(() => AssociationMemberSchema())).nullish(),
+    chairName: z.string().nullish(),
+    chairRole: z.string().nullish(),
+    currentPhase: z.number().nullish(),
+    customNotes: z.array(z.string()),
+    fiscalYearEnd: z.string().nullish(),
+    foundingDate: z.iso.datetime().nullish(),
+    foundingMinutesDocument: z.lazy(() =>
+      GeneratedStage2DocumentSchema().nullish(),
+    ),
+    incorporationCompletedAt: z.iso.datetime().nullish(),
+    isPersonalunion: z.boolean().nullish(),
+    languageClauseNeedsUpdate: z.boolean().nullish(),
+    members: z.array(z.lazy(() => AssociationMemberSchema())),
+    membershipFee: z.string().nullish(),
+    mpaDocument: z.lazy(() => GeneratedStage2DocumentSchema().nullish()),
+    multisig: z.lazy(() => MultisigConfigSchema().nullish()),
+    nameDe: z.string().nullish(),
+    nameEn: z.string().nullish(),
+    phases: z.array(z.lazy(() => PhaseRecordSchema())),
+    primaryLanguage: PrimaryLanguageSchema.nullish(),
+    purposeDe: z.string().nullish(),
+    purposeEn: z.string().nullish(),
+    regGaDocument: z.lazy(() => GeneratedStage2DocumentSchema().nullish()),
+    registeredAddress: z.string().nullish(),
+    registeredAddressConfirmed: z.boolean().nullish(),
+    seatCanton: z.string().nullish(),
+    seatCity: z.string().nullish(),
+    secretaryName: z.string().nullish(),
+    secretaryRole: z.string().nullish(),
+    stage2Started: z.boolean().nullish(),
+  });
+}
+
+export function UpdateBoardMemberInputSchema(): z.ZodObject<
+  Properties<UpdateBoardMemberInput>
+> {
+  return z.object({
+    id: z.string(),
+    name: z.string().nullish(),
+    nationalityOrCountry: z.string().nullish(),
+    representative: z.string().nullish(),
+    residenceOrCity: z.string().nullish(),
+    type: MemberTypeSchema.nullish(),
+  });
+}
+
+export function UpdateMemberInputSchema(): z.ZodObject<
+  Properties<UpdateMemberInput>
+> {
+  return z.object({
+    id: z.string(),
+    name: z.string().nullish(),
+    nationalityOrCountry: z.string().nullish(),
+    representative: z.string().nullish(),
+    residenceOrCity: z.string().nullish(),
+    type: MemberTypeSchema.nullish(),
+  });
+}
+
+export function UpdatePhaseStatusInputSchema(): z.ZodObject<
+  Properties<UpdatePhaseStatusInput>
+> {
+  return z.object({
+    completedDate: z.iso.datetime().nullish(),
+    documentsGenerated: z.boolean().nullish(),
+    documentsSigned: z.boolean().nullish(),
+    phaseNumber: z.number(),
+    status: PhaseStatusSchema,
+  });
+}
