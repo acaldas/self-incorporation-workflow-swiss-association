@@ -53,6 +53,7 @@ export default function Editor() {
     membersDone: (state.members?.length ?? 0) >= 2,
     boardDone: (state.boardMembers?.length ?? 0) >= 1,
     aoaSigned: state.aoaDocument?.isSigned === true,
+    regGaSigned: state.regGaDocument?.isSigned === true,
     meetingRolesDone: !!(state.chairName && state.secretaryName),
     minutesSigned: state.foundingMinutesDocument?.isSigned === true,
     multisigConfigured: !!state.multisig,

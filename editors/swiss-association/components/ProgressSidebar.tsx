@@ -22,6 +22,7 @@ export interface StageProgress {
   membersDone: boolean;
   boardDone: boolean;
   aoaSigned: boolean;
+  regGaSigned: boolean;
   meetingRolesDone: boolean;
   minutesSigned: boolean;
   multisigConfigured: boolean;
@@ -46,7 +47,7 @@ function buildStages(p: StageProgress): StageData[] {
     tasks: [
       { label: "AoA signed", done: p.aoaSigned },
       { label: "Meeting roles set", done: p.meetingRolesDone },
-      { label: "Reg GA signed", done: false },
+      { label: "Reg GA signed", done: p.regGaSigned },
       { label: "Minutes signed", done: p.minutesSigned },
     ],
     milestone: {
