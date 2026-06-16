@@ -1,0 +1,21 @@
+# Build output
+dist
+coverage
+.eslintcache
+*.tsbuildinfo
+
+# Dependencies
+node_modules
+
+# Environment / local
+.env.local
+.ph
+projects-import.js
+
+# OS junk
+.DS_Store
+
+# Editor / AI tooling
+.cursor/
+.gemini/
+.superpowers/

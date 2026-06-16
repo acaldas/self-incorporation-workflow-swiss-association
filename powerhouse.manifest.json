@@ -1,0 +1,28 @@
+{
+  "name": "self-incorporation-workflow-swiss-association",
+  "description": "",
+  "category": "",
+  "publisher": {
+    "name": "",
+    "url": ""
+  },
+  "documentModels": [
+    {
+      "id": "powerhouse/swiss-association",
+      "name": "SwissAssociation"
+    }
+  ],
+  "apps": [],
+  "editors": [
+    {
+      "id": "swiss-association",
+      "name": "swiss-association",
+      "documentTypes": [
+        "powerhouse/swiss-association"
+      ]
+    }
+  ],
+  "processors": [],
+  "subgraphs": [],
+  "config": []
+}
