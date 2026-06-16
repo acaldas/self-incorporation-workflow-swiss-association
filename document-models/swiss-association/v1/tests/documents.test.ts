@@ -108,6 +108,27 @@ describe("DocumentsOperations", () => {
     expect(afterSigned.state.global.incorporationCompletedAt).toBeNull();
   });
 
+  it("signing REG_GA after AoA (minutes still pending) does not set incorporationCompletedAt", () => {
+    const document = utils.createDocument();
+
+    const afterAoa = reducer(
+      document,
+      markStage2DocumentSigned({
+        documentType: "AOA",
+        signedAt: "2026-06-15T09:00:00.000Z",
+      }),
+    );
+    const afterRegGa = reducer(
+      afterAoa,
+      markStage2DocumentSigned({
+        documentType: "REG_GA",
+        signedAt: "2026-06-15T10:00:00.000Z",
+      }),
+    );
+
+    expect(afterRegGa.state.global.incorporationCompletedAt).toBeNull();
+  });
+
   it("does not overwrite REG_GA markdown once signed and locked", () => {
     const document = utils.createDocument();
 
