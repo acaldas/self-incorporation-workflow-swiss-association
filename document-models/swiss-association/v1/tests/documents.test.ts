@@ -155,4 +155,35 @@ describe("DocumentsOperations", () => {
 
     expect(afterEdit.state.global.regGaDocument?.markdown).toBe("original");
   });
+
+  it("persists DISSOLUTION_RESOLUTION signing to its own slot and locks it", () => {
+    const document = utils.createDocument();
+
+    const afterMd = reducer(
+      document,
+      setStage2DocumentMarkdown({
+        documentType: "DISSOLUTION_RESOLUTION",
+        markdown: "# Dissolution",
+      }),
+    );
+    const afterSigned = reducer(
+      afterMd,
+      markStage2DocumentSigned({
+        documentType: "DISSOLUTION_RESOLUTION",
+        signedAt: "2026-06-17T10:00:00.000Z",
+      }),
+    );
+
+    expect(afterSigned.state.global.dissolutionResolutionDocument?.markdown).toBe(
+      "# Dissolution",
+    );
+    expect(afterSigned.state.global.dissolutionResolutionDocument?.isSigned).toBe(
+      true,
+    );
+    expect(afterSigned.state.global.dissolutionResolutionDocument?.isLocked).toBe(
+      true,
+    );
+    expect(afterSigned.state.global.mpaDocument).toBeNull();
+    expect(afterSigned.state.global.incorporationCompletedAt).toBeNull();
+  });
 });
