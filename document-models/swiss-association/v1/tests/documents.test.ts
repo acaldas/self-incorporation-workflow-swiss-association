@@ -183,6 +183,9 @@ describe("DocumentsOperations", () => {
     expect(
       afterSigned.state.global.dissolutionResolutionDocument?.isLocked,
     ).toBe(true);
+    expect(
+      afterSigned.state.global.dissolutionResolutionDocument?.signedAt,
+    ).toBe("2026-06-17T10:00:00.000Z");
     expect(afterSigned.state.global.mpaDocument).toBeNull();
     expect(afterSigned.state.global.incorporationCompletedAt).toBeNull();
   });
