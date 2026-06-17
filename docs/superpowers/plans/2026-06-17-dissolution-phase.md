@@ -373,7 +373,11 @@ _Outcome: Association fully dissolved, compliant, and closed with a clean audit 
 export function buildDissolutionResolutionMarkdown(state: SwissAssociationState) {
   const associationName = state.nameEn || state.nameDe || "Association";
   const d = state.dissolution;
-  const date = formatDate(d?.dissolutionDate);
+  // dissolutionDate is stored as a full ISO datetime (the Date scalar
+  // validates via z.iso.datetime()); show date-only in the document.
+  const date = d?.dissolutionDate
+    ? d.dissolutionDate.slice(0, 10)
+    : formatDate(undefined);
   const formLabels: Record<string, string> = {
     PHYSICAL: "Physical",
     VIRTUAL: "Virtual",
@@ -471,7 +475,7 @@ export function StepDissolutionDetails({
   const defaultExecuting = (state.members || []).map((m) => m.name).join(", ");
 
   const [dissolutionDate, setDissolutionDate] = useState(
-    d?.dissolutionDate ?? "",
+    d?.dissolutionDate ? d.dissolutionDate.slice(0, 10) : "",
   );
   const [resolutionForm, setResolutionForm] = useState<FormValue>(
     (d?.resolutionForm as FormValue) ?? "WRITTEN",
@@ -488,7 +492,11 @@ export function StepDissolutionDetails({
   function handleSave() {
     dispatch(
       setDissolutionDetails({
-        dissolutionDate: dissolutionDate || undefined,
+        // Date scalar validates via z.iso.datetime(); the date input emits
+        // "YYYY-MM-DD", so widen it to a full ISO datetime before dispatch.
+        dissolutionDate: dissolutionDate
+          ? `${dissolutionDate}T00:00:00.000Z`
+          : undefined,
         resolutionForm,
         assetRecipient: assetRecipient || undefined,
         executingPersons: executingPersons || undefined,
