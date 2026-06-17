@@ -30,6 +30,14 @@ const STAGES = [
       { number: 9, label: "Final Archive" },
     ],
   },
+  {
+    number: 4,
+    name: "Dissolution",
+    steps: [
+      { number: 10, label: "Dissolution Details" },
+      { number: 11, label: "Dissolution Resolution" },
+    ],
+  },
 ];
 
 function getStageStatus(
@@ -50,6 +58,8 @@ function getStageStatus(
       return s2Done ? "done" : s1Done ? "active" : "locked";
     case 3:
       return s3Done ? "done" : s2Done ? "active" : "locked";
+    case 4:
+      return progress.dissolutionSigned ? "done" : "active";
     default:
       return "locked";
   }
@@ -156,7 +166,8 @@ export function WizardLayout({
                     {stage.steps.map((step) => {
                       const isActive = step.number === currentStep;
                       const isDone = step.number < currentStep;
-                      const isLocked = step.number > maxStep;
+                      const isLocked =
+                        step.number > maxStep && step.number < 10;
                       return (
                         <li key={step.number}>
                           <button

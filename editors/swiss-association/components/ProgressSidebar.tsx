@@ -27,6 +27,8 @@ export interface StageProgress {
   minutesSigned: boolean;
   multisigConfigured: boolean;
   mpaSigned: boolean;
+  dissolutionDetailsDone: boolean;
+  dissolutionSigned: boolean;
   hasMultisig: boolean;
 }
 
@@ -56,6 +58,19 @@ function buildStages(p: StageProgress): StageData[] {
     },
   };
 
+  const stage4: StageData = {
+    number: 4,
+    name: "Dissolution",
+    tasks: [
+      { label: "Dissolution details set", done: p.dissolutionDetailsDone },
+      { label: "Resolution signed", done: p.dissolutionSigned },
+    ],
+    milestone: {
+      title: "Entity dissolved",
+      reached: p.dissolutionSigned,
+    },
+  };
+
   const m1Reached = p.aoaSigned && p.minutesSigned;
 
   if (!p.hasMultisig && m1Reached) {
@@ -71,6 +86,7 @@ function buildStages(p: StageProgress): StageData[] {
           reached: true,
         },
       },
+      stage4,
     ];
   }
 
@@ -87,7 +103,7 @@ function buildStages(p: StageProgress): StageData[] {
     },
   };
 
-  return [stage1, stage2, stage3];
+  return [stage1, stage2, stage3, stage4];
 }
 
 function MilestoneCard({
@@ -270,7 +286,8 @@ export function ProgressSidebar({ progress }: { progress: StageProgress }) {
   const [collapsed, setCollapsed] = useState(false);
   const stages = buildStages(progress);
 
-  const allTasks = stages.flatMap((s) => s.tasks);
+  const incorporationStages = stages.filter((s) => s.number <= 3);
+  const allTasks = incorporationStages.flatMap((s) => s.tasks);
   const completed = allTasks.filter((t) => t.done).length;
   const total = allTasks.length;
   const pct = total > 0 ? (completed / total) * 100 : 0;
@@ -281,6 +298,7 @@ export function ProgressSidebar({ progress }: { progress: StageProgress }) {
   ): "done" | "active" | "locked" {
     const allDone = stage.tasks.every((t) => t.done);
     if (allDone) return "done";
+    if (stage.number === 4) return "active";
     const prevAllDone =
       index === 0 || stages[index - 1].tasks.every((t) => t.done);
     if (prevAllDone) return "active";

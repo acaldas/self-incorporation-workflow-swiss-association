@@ -14,6 +14,8 @@ import { StepArticlesOfAssociation } from "./components/StepArticlesOfAssociatio
 import { StepMultisigParticipationAgreement } from "./components/StepMultisigParticipationAgreement.js";
 import { StepFinalArchive } from "./components/StepFinalArchive.js";
 import { StepRegulationGA } from "./components/StepRegulationGA.js";
+import { StepDissolutionDetails } from "./components/StepDissolutionDetails.js";
+import { StepDissolutionResolution } from "./components/StepDissolutionResolution.js";
 import type { StageProgress } from "./components/ProgressSidebar.js";
 
 export default function Editor() {
@@ -42,6 +44,7 @@ export default function Editor() {
         ? 9
         : 8
       : 7;
+  const DISSOLUTION_FIRST_STEP = 10;
 
   const stageProgress: StageProgress = {
     detailsDone: !!(
@@ -58,11 +61,15 @@ export default function Editor() {
     minutesSigned: state.foundingMinutesDocument?.isSigned === true,
     multisigConfigured: !!state.multisig,
     mpaSigned: state.mpaDocument?.isSigned === true,
+    dissolutionDetailsDone: !!(
+      state.dissolution?.dissolutionDate && state.dissolution?.assetRecipient
+    ),
+    dissolutionSigned: state.dissolutionResolutionDocument?.isSigned === true,
     hasMultisig: !!state.multisig,
   };
 
   function handleStepClick(step: number) {
-    if (step <= maxStep) {
+    if (step <= maxStep || step >= DISSOLUTION_FIRST_STEP) {
       setCurrentStep(step);
     }
   }
@@ -151,6 +158,23 @@ export default function Editor() {
       case 9:
         return (
           <StepFinalArchive state={state} onBack={() => setCurrentStep(8)} />
+        );
+      case 10:
+        return (
+          <StepDissolutionDetails
+            state={state}
+            dispatch={safeDispatch}
+            onBack={() => setCurrentStep(9)}
+            onNext={() => setCurrentStep(11)}
+          />
+        );
+      case 11:
+        return (
+          <StepDissolutionResolution
+            state={state}
+            dispatch={safeDispatch}
+            onBack={() => setCurrentStep(10)}
+          />
         );
       default:
         return null;
