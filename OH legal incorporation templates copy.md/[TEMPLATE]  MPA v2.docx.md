@@ -1,37 +1,3 @@
-**Multisig Participation Agreement**
-
-**Description**
-
-Legal Agreement entered between Multisig Signers and the Association
-
-**Parameters**
-
-* Main Contract  
-  * Party 1: (Association Name)  
-  * Party 2: (Active Signer Name)  
-    * If natural person: ( \+ citizenship, residency)  
-    * If legal person ( \+ incorporation city, incorporation country)  
-  * Signature  
-  * Signature Date
-
-    
-
-  * Annex 1: Wallet Description  
-    * Number of Keys  
-    * Decision Quorum  
-    * Signature Platform (e.g. Safe Multisig)  
-    * Multisig Address  
-  * Annex 2 Transactional Procedures  
-    * \[private comms channel\]
-
-      
-
-  * Annex 3  
-    * List of Internal Policies  
-      * \[Link to internal policy documents\]
-
- 
-
 **MULTISIGNATURE PARTICIPATION AGREEMENT**
 
 **(“Agreement”)**
