@@ -457,7 +457,9 @@ _Assumptions: unanimous agreement, no debts, no disputes. Legal basis: ZGB, Arti
 
 _Outcome: Association fully dissolved, compliant, and closed with a clean audit trail._`;
 
-export function buildDissolutionResolutionMarkdown(state: SwissAssociationState) {
+export function buildDissolutionResolutionMarkdown(
+  state: SwissAssociationState,
+) {
   const associationName = state.nameEn || state.nameDe || "Association";
   const d = state.dissolution;
   // dissolutionDate is stored as a full ISO datetime (the Date scalar

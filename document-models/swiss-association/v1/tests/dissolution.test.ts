@@ -40,7 +40,9 @@ describe("DissolutionOperations", () => {
       setDissolutionDetails({ dissolutionDate: "2026-07-01T00:00:00.000Z" }),
     );
 
-    expect(second.state.global.dissolution?.assetRecipient).toBe("Foundation A");
+    expect(second.state.global.dissolution?.assetRecipient).toBe(
+      "Foundation A",
+    );
     expect(second.state.global.dissolution?.dissolutionDate).toBe(
       "2026-07-01T00:00:00.000Z",
     );

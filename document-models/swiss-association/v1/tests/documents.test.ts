@@ -174,15 +174,15 @@ describe("DocumentsOperations", () => {
       }),
     );
 
-    expect(afterSigned.state.global.dissolutionResolutionDocument?.markdown).toBe(
-      "# Dissolution",
-    );
-    expect(afterSigned.state.global.dissolutionResolutionDocument?.isSigned).toBe(
-      true,
-    );
-    expect(afterSigned.state.global.dissolutionResolutionDocument?.isLocked).toBe(
-      true,
-    );
+    expect(
+      afterSigned.state.global.dissolutionResolutionDocument?.markdown,
+    ).toBe("# Dissolution");
+    expect(
+      afterSigned.state.global.dissolutionResolutionDocument?.isSigned,
+    ).toBe(true);
+    expect(
+      afterSigned.state.global.dissolutionResolutionDocument?.isLocked,
+    ).toBe(true);
     expect(afterSigned.state.global.mpaDocument).toBeNull();
     expect(afterSigned.state.global.incorporationCompletedAt).toBeNull();
   });
