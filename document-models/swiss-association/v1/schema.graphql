@@ -41,6 +41,13 @@ enum Stage2DocumentType {
   FOUNDING_MINUTES
   MPA
   REG_GA
+  DISSOLUTION_RESOLUTION
+}
+
+enum DissolutionResolutionForm {
+  PHYSICAL
+  VIRTUAL
+  WRITTEN
 }
 
 type AssociationMember {
@@ -81,6 +88,14 @@ type GeneratedStage2Document {
   isLocked: Boolean
 }
 
+type Dissolution {
+  dissolutionDate: Date
+  resolutionForm: DissolutionResolutionForm
+  assetRecipient: String
+  executingPersons: String
+  remainingAssetsSummary: String
+}
+
 type SwissAssociationState {
   nameEn: String
   nameDe: String
@@ -106,6 +121,8 @@ type SwissAssociationState {
   foundingMinutesDocument: GeneratedStage2Document
   mpaDocument: GeneratedStage2Document
   regGaDocument: GeneratedStage2Document
+  dissolution: Dissolution
+  dissolutionResolutionDocument: GeneratedStage2Document
   incorporationCompletedAt: DateTime
   currentPhase: Int
   phases: [PhaseRecord!]!
@@ -248,4 +265,14 @@ input AdvancePhaseInput {
 
 input AddNoteInput {
   note: String!
+}
+
+# dissolution
+
+input SetDissolutionDetailsInput {
+  dissolutionDate: Date
+  resolutionForm: DissolutionResolutionForm
+  assetRecipient: String
+  executingPersons: String
+  remainingAssetsSummary: String
 }

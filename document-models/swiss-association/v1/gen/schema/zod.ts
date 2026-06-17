@@ -8,6 +8,8 @@ import type {
   AdvancePhaseInput,
   AssociationMember,
   CopyFoundingMembersToBoardInput,
+  Dissolution,
+  DissolutionResolutionForm,
   GeneratedStage2Document,
   MarkStage2DocumentSignedInput,
   MemberType,
@@ -19,6 +21,7 @@ import type {
   RemoveMemberInput,
   SetAssociationNameInput,
   SetAssociationSeatInput,
+  SetDissolutionDetailsInput,
   SetFiscalDetailsInput,
   SetFoundingDateInput,
   SetMeetingRolesInput,
@@ -46,6 +49,12 @@ export const definedNonNullAnySchema = z
   .any()
   .refine((v) => isDefinedNonNullAny(v));
 
+export const DissolutionResolutionFormSchema = z.enum([
+  "PHYSICAL",
+  "VIRTUAL",
+  "WRITTEN",
+]);
+
 export const MemberTypeSchema = z.enum(["LEGAL_ENTITY", "NATURAL_PERSON"]);
 
 export const PhaseStatusSchema = z.enum([
@@ -59,6 +68,7 @@ export const PrimaryLanguageSchema = z.enum(["DE", "EN"]);
 
 export const Stage2DocumentTypeSchema = z.enum([
   "AOA",
+  "DISSOLUTION_RESOLUTION",
   "FOUNDING_MINUTES",
   "MPA",
   "REG_GA",
@@ -123,6 +133,17 @@ export function CopyFoundingMembersToBoardInputSchema(): z.ZodObject<
 > {
   return z.object({
     confirm: z.boolean(),
+  });
+}
+
+export function DissolutionSchema(): z.ZodObject<Properties<Dissolution>> {
+  return z.object({
+    __typename: z.literal("Dissolution").optional(),
+    assetRecipient: z.string().nullish(),
+    dissolutionDate: z.iso.datetime().nullish(),
+    executingPersons: z.string().nullish(),
+    remainingAssetsSummary: z.string().nullish(),
+    resolutionForm: DissolutionResolutionFormSchema.nullish(),
   });
 }
 
@@ -212,6 +233,18 @@ export function SetAssociationSeatInputSchema(): z.ZodObject<
   });
 }
 
+export function SetDissolutionDetailsInputSchema(): z.ZodObject<
+  Properties<SetDissolutionDetailsInput>
+> {
+  return z.object({
+    assetRecipient: z.string().nullish(),
+    dissolutionDate: z.iso.datetime().nullish(),
+    executingPersons: z.string().nullish(),
+    remainingAssetsSummary: z.string().nullish(),
+    resolutionForm: DissolutionResolutionFormSchema.nullish(),
+  });
+}
+
 export function SetFiscalDetailsInputSchema(): z.ZodObject<
   Properties<SetFiscalDetailsInput>
 > {
@@ -295,6 +328,10 @@ export function SwissAssociationStateSchema(): z.ZodObject<
     chairRole: z.string().nullish(),
     currentPhase: z.number().nullish(),
     customNotes: z.array(z.string()),
+    dissolution: z.lazy(() => DissolutionSchema().nullish()),
+    dissolutionResolutionDocument: z.lazy(() =>
+      GeneratedStage2DocumentSchema().nullish(),
+    ),
     fiscalYearEnd: z.string().nullish(),
     foundingDate: z.iso.datetime().nullish(),
     foundingMinutesDocument: z.lazy(() =>

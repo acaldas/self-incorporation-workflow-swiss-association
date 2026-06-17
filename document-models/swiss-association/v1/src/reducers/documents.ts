@@ -19,6 +19,7 @@ function getTargetDocument(
     foundingMinutesDocument?: GeneratedStage2Document | null;
     mpaDocument?: GeneratedStage2Document | null;
     regGaDocument?: GeneratedStage2Document | null;
+    dissolutionResolutionDocument?: GeneratedStage2Document | null;
   },
   documentType: Stage2DocumentType,
 ) {
@@ -36,6 +37,12 @@ function getTargetDocument(
   if (documentType === "REG_GA") {
     if (!state.regGaDocument) state.regGaDocument = defaultStage2Document();
     return state.regGaDocument;
+  }
+
+  if (documentType === "DISSOLUTION_RESOLUTION") {
+    if (!state.dissolutionResolutionDocument)
+      state.dissolutionResolutionDocument = defaultStage2Document();
+    return state.dissolutionResolutionDocument;
   }
 
   if (!state.mpaDocument) state.mpaDocument = defaultStage2Document();

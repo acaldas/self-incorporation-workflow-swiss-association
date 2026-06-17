@@ -39,6 +39,8 @@ export function defaultGlobalState(): SwissAssociationGlobalState {
     foundingMinutesDocument: null,
     mpaDocument: null,
     regGaDocument: null,
+    dissolution: null,
+    dissolutionResolutionDocument: null,
     incorporationCompletedAt: null,
     currentPhase: 1,
     phases: [

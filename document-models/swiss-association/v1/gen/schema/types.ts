@@ -98,6 +98,16 @@ export type CopyFoundingMembersToBoardInput = {
   confirm: Scalars["Boolean"]["input"];
 };
 
+export type Dissolution = {
+  assetRecipient: Maybe<Scalars["String"]["output"]>;
+  dissolutionDate: Maybe<Scalars["Date"]["output"]>;
+  executingPersons: Maybe<Scalars["String"]["output"]>;
+  remainingAssetsSummary: Maybe<Scalars["String"]["output"]>;
+  resolutionForm: Maybe<DissolutionResolutionForm>;
+};
+
+export type DissolutionResolutionForm = "PHYSICAL" | "VIRTUAL" | "WRITTEN";
+
 export type GeneratedStage2Document = {
   isLocked: Maybe<Scalars["Boolean"]["output"]>;
   isSigned: Maybe<Scalars["Boolean"]["output"]>;
@@ -161,6 +171,14 @@ export type SetAssociationSeatInput = {
   seatCity: Scalars["String"]["input"];
 };
 
+export type SetDissolutionDetailsInput = {
+  assetRecipient?: InputMaybe<Scalars["String"]["input"]>;
+  dissolutionDate?: InputMaybe<Scalars["Date"]["input"]>;
+  executingPersons?: InputMaybe<Scalars["String"]["input"]>;
+  remainingAssetsSummary?: InputMaybe<Scalars["String"]["input"]>;
+  resolutionForm?: InputMaybe<DissolutionResolutionForm>;
+};
+
 export type SetFiscalDetailsInput = {
   fiscalYearEnd?: InputMaybe<Scalars["String"]["input"]>;
   membershipFee?: InputMaybe<Scalars["String"]["input"]>;
@@ -200,7 +218,12 @@ export type SetStage2DocumentMarkdownInput = {
   markdown: Scalars["String"]["input"];
 };
 
-export type Stage2DocumentType = "AOA" | "FOUNDING_MINUTES" | "MPA" | "REG_GA";
+export type Stage2DocumentType =
+  | "AOA"
+  | "DISSOLUTION_RESOLUTION"
+  | "FOUNDING_MINUTES"
+  | "MPA"
+  | "REG_GA";
 
 export type StartStage_2Input = {
   startedAt: Scalars["DateTime"]["input"];
@@ -214,6 +237,8 @@ export type SwissAssociationState = {
   chairRole: Maybe<Scalars["String"]["output"]>;
   currentPhase: Maybe<Scalars["Int"]["output"]>;
   customNotes: Array<Scalars["String"]["output"]>;
+  dissolution: Maybe<Dissolution>;
+  dissolutionResolutionDocument: Maybe<GeneratedStage2Document>;
   fiscalYearEnd: Maybe<Scalars["String"]["output"]>;
   foundingDate: Maybe<Scalars["Date"]["output"]>;
   foundingMinutesDocument: Maybe<GeneratedStage2Document>;
