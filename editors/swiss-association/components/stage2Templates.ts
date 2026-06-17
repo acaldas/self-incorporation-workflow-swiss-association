@@ -3,6 +3,7 @@ import aoaTemplateRaw from "../../../oh legal  templates.md/_[TEMPLATE] default 
 import foundingMinutesTemplateRaw from "../../../oh legal  templates.md/[TEMPLATE] OH Founding Meeting Minutes.md?raw";
 import mpaV2TemplateRaw from "../../../OH legal incorporation templates copy.md/[TEMPLATE]  MPA v2.docx.md?raw";
 import regulationGATemplateRaw from "../../../OH legal incorporation templates copy.md/[TEMPLATE] OH  Regs General Assembly.md?raw";
+import dissolutionResolutionTemplateRaw from "../../../OH legal incorporation templates copy.md/[TEMPLATE] OH Dissolution Resolution.md?raw";
 
 function formatList(items: string[]) {
   if (items.length === 0) return "- (to be completed)";
@@ -437,4 +438,61 @@ export function buildMpaMarkdown(state: SwissAssociationState) {
   // Add explicit generated signer roster at the end.
   template += `\n\n## Generated Signer Roster\n${formatList(boardMembers)}\n`;
   return appendPlaceholderReport(template, "MPA v2");
+}
+
+export const DISSOLUTION_PROCEDURE_MEMO = `## Dissolution & Liquidation Procedure (Reference)
+
+_Assumptions: unanimous agreement, no debts, no disputes. Legal basis: ZGB, Articles of Association, Regulation GA._
+
+1. **General Assembly Resolution (unanimous)** — resolve to dissolve, confirm no debts, designate the persons executing liquidation, approve use of remaining assets, instruct final accounts and tax filings.
+2. **Confirm financial position** — closing balance sheet at the dissolution date; reconcile bank accounts, crypto wallets, receivables.
+3. **Settle final administrative items** — invoices, contracts, registrations (VAT, social security), tools/subscriptions.
+4. **Transfer / allocate remaining assets** — per purpose, no member distributions; document recipients, wallet addresses, transaction hashes.
+5. **Prepare final liquidation accounts** — opening balance, transfers, final balance (typically zero).
+6. **Final confirmation by Members** — confirm completion and approve final accounts.
+7. **Tax & regulatory closure** — notify tax authorities, file final returns, close social security.
+8. **Close bank accounts & infrastructure** — confirm zero balances, archive statements, empty/decommission wallets.
+9. **Formal deregistration** — if registered, file deletion with the Swiss Commercial Register.
+10. **Record retention** — store all records for 10 years.
+
+_Outcome: Association fully dissolved, compliant, and closed with a clean audit trail._`;
+
+export function buildDissolutionResolutionMarkdown(state: SwissAssociationState) {
+  const associationName = state.nameEn || state.nameDe || "Association";
+  const d = state.dissolution;
+  // dissolutionDate is stored as a full ISO datetime (the Date scalar
+  // validates via z.iso.datetime()); show date-only in the document.
+  const date = d?.dissolutionDate
+    ? d.dissolutionDate.slice(0, 10)
+    : formatDate(undefined);
+  const formLabels: Record<string, string> = {
+    PHYSICAL: "Physical",
+    VIRTUAL: "Virtual",
+    WRITTEN: "Written (Urabstimmung)",
+  };
+  const form = d?.resolutionForm
+    ? formLabels[d.resolutionForm]
+    : "Physical / Virtual / Written (Urabstimmung)";
+  const recipient = d?.assetRecipient || "[Insert recipient]";
+  const signers = (state.members || []).map((m) => m.name);
+
+  let template = applyReplacements(dissolutionResolutionTemplateRaw, [
+    { token: "[Association Name]", value: associationName },
+    { token: "[Date]", value: date },
+    { token: "[Form]", value: form },
+    { token: "[Insert recipient]", value: recipient },
+  ]);
+
+  const sigBlock =
+    signers.length > 0
+      ? signers
+          .map(
+            (name) =>
+              `Name: ${name}    Signature: ____________________    Date: __________`,
+          )
+          .join("\n\n")
+      : "Name: ____________________    Signature: ____________________    Date: __________";
+  template = template.split("[Signatures]").join(sigBlock);
+
+  return appendPlaceholderReport(template, "Dissolution Resolution");
 }
