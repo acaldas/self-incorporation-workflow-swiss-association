@@ -27,7 +27,7 @@ export function StepMultisigParticipationAgreement({
       generateMarkdown={() => buildMpaMarkdown(state)}
       onBack={onBack}
       onNext={onNext}
-      nextLabel="Continue to Final Archive →"
+      nextLabel="Continue to Contributor Agreements →"
       lockedHint="The MPA is now locked and cannot be edited."
       nextRequiresSigned
     />

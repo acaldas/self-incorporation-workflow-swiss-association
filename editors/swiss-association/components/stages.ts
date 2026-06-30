@@ -35,10 +35,10 @@ export const STAGES: StageDef[] = [
   },
   {
     number: 3,
-    name: "Post-Incorporation",
+    name: "Contract management",
     steps: [
       { number: 8, label: "Review & Sign MPA" },
-      { number: 9, label: "Final Archive" },
+      { number: 9, label: "Contributor agreements" },
     ],
   },
   {
