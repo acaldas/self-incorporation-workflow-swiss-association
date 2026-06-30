@@ -5,6 +5,7 @@ import {
   useSelectedSwissAssociationDocument,
 } from "document-models/swiss-association";
 import { WizardLayout } from "./components/WizardLayout.js";
+import { StepWelcome } from "./components/StepWelcome.js";
 import { StepAssociationDetails } from "./components/StepAssociationDetails.js";
 import { StepMemberRegistry } from "./components/StepMemberRegistry.js";
 import { StepBoardSetup } from "./components/StepBoardSetup.js";
@@ -20,7 +21,7 @@ import type { StageProgress } from "./components/ProgressSidebar.js";
 
 export default function Editor() {
   const [document, dispatch] = useSelectedSwissAssociationDocument();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
 
   if (!document || !dispatch) {
     return (
@@ -76,6 +77,8 @@ export default function Editor() {
 
   function renderStep() {
     switch (currentStep) {
+      case 0:
+        return <StepWelcome onNext={() => setCurrentStep(1)} />;
       case 1:
         return (
           <StepAssociationDetails

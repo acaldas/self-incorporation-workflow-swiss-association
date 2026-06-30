@@ -1,20 +1,10 @@
 import { useState } from "react";
-
-interface TaskItem {
-  label: string;
-  done: boolean;
-}
+import { STAGES, DISSOLUTION_FIRST_STEP } from "./stages.js";
+import type { StageDef } from "./stages.js";
 
 interface MilestoneData {
   title: string;
   reached: boolean;
-}
-
-interface StageData {
-  number: number;
-  name: string;
-  tasks: TaskItem[];
-  milestone?: MilestoneData;
 }
 
 export interface StageProgress {
@@ -32,78 +22,64 @@ export interface StageProgress {
   hasMultisig: boolean;
 }
 
-function buildStages(p: StageProgress): StageData[] {
-  const stage1: StageData = {
-    number: 1,
-    name: "Pre-Incorporation",
-    tasks: [
-      { label: "Association details", done: p.detailsDone },
-      { label: "Member registry", done: p.membersDone },
-      { label: "Board setup", done: p.boardDone },
-    ],
-  };
-
-  const stage2: StageData = {
-    number: 2,
-    name: "Incorporation",
-    tasks: [
-      { label: "AoA signed", done: p.aoaSigned },
-      { label: "Meeting roles set", done: p.meetingRolesDone },
-      { label: "Reg GA signed", done: p.regGaSigned },
-      { label: "Minutes signed", done: p.minutesSigned },
-    ],
-    milestone: {
-      title: "Entity legally constituted",
-      reached: p.aoaSigned && p.minutesSigned,
-    },
-  };
-
-  const stage4: StageData = {
-    number: 4,
-    name: "Dissolution",
-    tasks: [
-      { label: "Dissolution details set", done: p.dissolutionDetailsDone },
-      { label: "Resolution signed", done: p.dissolutionSigned },
-    ],
-    milestone: {
-      title: "Entity dissolved",
-      reached: p.dissolutionSigned,
-    },
-  };
-
-  const m1Reached = p.aoaSigned && p.minutesSigned;
-
-  if (!p.hasMultisig && m1Reached) {
-    return [
-      stage1,
-      stage2,
-      {
-        number: 3,
-        name: "Post-Incorporation",
-        tasks: [{ label: "No multisig needed", done: true }],
-        milestone: {
-          title: "Entity enabled to pay and get paid",
-          reached: true,
-        },
-      },
-      stage4,
-    ];
+// Maps a navigable step number to its "done" condition, derived from state.
+// The MPA step (8) is satisfied either by signing it or — when no multisig is
+// used — once the entity is constituted (matching the old "no multisig needed"
+// completion). Final Archive (9) has no completion action of its own; it is
+// done once the post-incorporation milestone (payments enabled) is reached.
+function isStepDone(step: number, p: StageProgress): boolean {
+  const constituted = p.aoaSigned && p.minutesSigned;
+  const postIncorpDone = constituted && (p.mpaSigned || !p.hasMultisig);
+  switch (step) {
+    case 1:
+      return p.detailsDone;
+    case 2:
+      return p.membersDone;
+    case 3:
+      return p.boardDone;
+    case 4:
+      return p.aoaSigned;
+    case 5:
+      return p.regGaSigned;
+    case 6:
+      return p.multisigConfigured;
+    case 7:
+      return p.minutesSigned;
+    case 8:
+      return p.mpaSigned || (!p.hasMultisig && constituted);
+    case 9:
+      return postIncorpDone;
+    case 10:
+      return p.dissolutionDetailsDone;
+    case 11:
+      return p.dissolutionSigned;
+    default:
+      return false;
   }
+}
 
-  const stage3: StageData = {
-    number: 3,
-    name: "Post-Incorporation",
-    tasks: [
-      { label: "Multisig configured", done: p.multisigConfigured },
-      { label: "MPA signed", done: p.mpaSigned },
-    ],
-    milestone: {
-      title: "Entity enabled to pay and get paid",
-      reached: m1Reached && p.mpaSigned,
-    },
-  };
+function stageMilestone(
+  stageNumber: number,
+  p: StageProgress,
+): MilestoneData | undefined {
+  const constituted = p.aoaSigned && p.minutesSigned;
+  switch (stageNumber) {
+    case 2:
+      return { title: "Entity legally constituted", reached: constituted };
+    case 3:
+      return {
+        title: "Entity enabled to pay and get paid",
+        reached: constituted && (p.mpaSigned || !p.hasMultisig),
+      };
+    case 4:
+      return { title: "Entity dissolved", reached: p.dissolutionSigned };
+    default:
+      return undefined;
+  }
+}
 
-  return [stage1, stage2, stage3, stage4];
+function stageAllDone(stage: StageDef, p: StageProgress): boolean {
+  return stage.steps.every((s) => isStepDone(s.number, p));
 }
 
 function MilestoneCard({
@@ -165,16 +141,86 @@ function CheckIcon({ size = 10 }: { size?: number }) {
   );
 }
 
+interface StepRowProps {
+  number: number;
+  label: string;
+  done: boolean;
+  active: boolean;
+  locked: boolean;
+  onClick: () => void;
+}
+
+function StepRow({
+  number,
+  label,
+  done,
+  active,
+  locked,
+  onClick,
+}: StepRowProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={locked}
+      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
+        active
+          ? "bg-red-50"
+          : locked
+            ? "cursor-not-allowed"
+            : "hover:bg-slate-50"
+      }`}
+    >
+      <span
+        className={`w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0 ${
+          active
+            ? "bg-red-600 text-white"
+            : done
+              ? "bg-green-500 text-white"
+              : locked
+                ? "bg-slate-100 text-slate-400"
+                : "bg-slate-200 text-slate-500"
+        }`}
+      >
+        {done && !active ? <CheckIcon size={9} /> : number}
+      </span>
+      <span
+        className={`text-[11px] ${
+          active
+            ? "text-red-700 font-semibold"
+            : locked
+              ? "text-slate-400"
+              : done
+                ? "text-slate-500"
+                : "text-slate-700"
+        }`}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
+
 function StageCard({
   stage,
   status,
+  progress,
+  currentStep,
+  maxStep,
+  onStepClick,
 }: {
-  stage: StageData;
+  stage: StageDef;
   status: "done" | "active" | "locked";
+  progress: StageProgress;
+  currentStep: number;
+  maxStep: number;
+  onStepClick: (step: number) => void;
 }) {
-  const completedCount = stage.tasks.filter((t) => t.done).length;
-  const totalCount = stage.tasks.length;
+  const completedCount = stage.steps.filter((s) =>
+    isStepDone(s.number, progress),
+  ).length;
+  const totalCount = stage.steps.length;
   const fraction = totalCount > 0 ? completedCount / totalCount : 0;
+  const milestone = stageMilestone(stage.number, progress);
 
   const bg =
     status === "done"
@@ -184,9 +230,7 @@ function StageCard({
         : "bg-slate-50 border-slate-200";
 
   return (
-    <div
-      className={`border rounded-xl p-2.5 ${bg} ${status === "locked" ? "opacity-50" : ""}`}
-    >
+    <div className={`border rounded-xl p-2.5 ${bg}`}>
       {/* Header row */}
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5">
@@ -232,77 +276,73 @@ function StageCard({
           className={`h-[3px] rounded-full overflow-hidden ${status === "active" ? "bg-red-100" : "bg-slate-200"}`}
         >
           <div
-            className={`h-full rounded-full ${status === "active" ? "bg-red-600" : ""}`}
+            className={`h-full rounded-full ${status === "active" ? "bg-red-600" : "bg-slate-300"}`}
             style={{ width: `${fraction * 100}%` }}
           />
         </div>
       )}
 
-      {/* Task list — only for active stage */}
-      {status === "active" && (
-        <div className="mt-2 flex flex-col gap-[3px]">
-          {stage.tasks.map((task) => (
-            <div key={task.label} className="flex items-center gap-1.5">
-              {task.done ? (
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 10 10"
-                  className="flex-shrink-0"
-                >
-                  <path
-                    d="M2 5L4 7.5L8 2.5"
-                    stroke="#22c55e"
-                    strokeWidth="1.3"
-                    fill="none"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              ) : (
-                <div className="w-2 h-2 rounded-full border-[1.5px] border-slate-300 flex-shrink-0 mx-[1px]" />
-              )}
-              <span
-                className={`text-[10px] ${task.done ? "text-slate-400 line-through" : "text-slate-900"}`}
-              >
-                {task.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Step navigation rows — shown for every stage */}
+      <div className="mt-2 flex flex-col gap-0.5">
+        {stage.steps.map((step) => {
+          const locked =
+            step.number > maxStep && step.number < DISSOLUTION_FIRST_STEP;
+          return (
+            <StepRow
+              key={step.number}
+              number={step.number}
+              label={step.label}
+              done={isStepDone(step.number, progress)}
+              active={step.number === currentStep}
+              locked={locked}
+              onClick={() => onStepClick(step.number)}
+            />
+          );
+        })}
+      </div>
 
       {/* Milestone */}
-      {stage.milestone && (
-        <MilestoneCard
-          milestone={stage.milestone}
-          dimmed={status === "locked"}
-        />
+      {milestone && (
+        <MilestoneCard milestone={milestone} dimmed={status === "locked"} />
       )}
     </div>
   );
 }
 
-export function ProgressSidebar({ progress }: { progress: StageProgress }) {
-  const [collapsed, setCollapsed] = useState(false);
-  const stages = buildStages(progress);
+interface ProgressSidebarProps {
+  progress: StageProgress;
+  currentStep: number;
+  maxStep: number;
+  onStepClick: (step: number) => void;
+}
 
-  const incorporationStages = stages.filter((s) => s.number <= 3);
-  const allTasks = incorporationStages.flatMap((s) => s.tasks);
-  const completed = allTasks.filter((t) => t.done).length;
-  const total = allTasks.length;
+export function ProgressSidebar({
+  progress,
+  currentStep,
+  maxStep,
+  onStepClick,
+}: ProgressSidebarProps) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Overall progress counts steps across the incorporation stages (1–3).
+  const incorporationSteps = STAGES.filter((s) => s.number <= 3).flatMap(
+    (s) => s.steps,
+  );
+  const completed = incorporationSteps.filter((s) =>
+    isStepDone(s.number, progress),
+  ).length;
+  const total = incorporationSteps.length;
   const pct = total > 0 ? (completed / total) * 100 : 0;
 
   function getStageStatus(
-    stage: StageData,
+    stage: StageDef,
     index: number,
   ): "done" | "active" | "locked" {
-    const allDone = stage.tasks.every((t) => t.done);
-    if (allDone) return "done";
+    if (stageAllDone(stage, progress)) return "done";
     if (stage.number === 4) return "active";
     const prevAllDone =
-      index === 0 || stages[index - 1].tasks.every((t) => t.done);
-    if (prevAllDone) return "active";
-    return "locked";
+      index === 0 || stageAllDone(STAGES[index - 1], progress);
+    return prevAllDone ? "active" : "locked";
   }
 
   if (collapsed) {
@@ -313,7 +353,7 @@ export function ProgressSidebar({ progress }: { progress: StageProgress }) {
         style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}
       >
         <div className="flex gap-0.5">
-          {stages.map((s, i) => {
+          {STAGES.map((s, i) => {
             const st = getStageStatus(s, i);
             return (
               <div
@@ -340,7 +380,7 @@ export function ProgressSidebar({ progress }: { progress: StageProgress }) {
   }
 
   return (
-    <aside className="swiss-wizard-status w-52 min-h-[calc(100vh-73px)] bg-white border-l border-slate-200 pt-4 px-3 flex-shrink-0">
+    <aside className="swiss-wizard-status w-56 min-h-[calc(100vh-73px)] bg-white border-l border-slate-200 pt-4 px-3 flex-shrink-0">
       {/* Collapse toggle */}
       <div className="flex justify-end mb-2">
         <button
@@ -377,11 +417,15 @@ export function ProgressSidebar({ progress }: { progress: StageProgress }) {
 
       {/* Stage cards */}
       <div className="flex flex-col gap-2">
-        {stages.map((stage, i) => (
+        {STAGES.map((stage, i) => (
           <StageCard
             key={stage.number}
             stage={stage}
             status={getStageStatus(stage, i)}
+            progress={progress}
+            currentStep={currentStep}
+            maxStep={maxStep}
+            onStepClick={onStepClick}
           />
         ))}
       </div>

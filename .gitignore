@@ -19,3 +19,9 @@ projects-import.js
 .cursor/
 .gemini/
 .superpowers/
+
+# Playwright test artifacts
+.playwright-mcp/
+*-screen.png
+*-sidebar.png
+*-steps.png
