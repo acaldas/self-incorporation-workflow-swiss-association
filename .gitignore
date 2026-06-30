@@ -22,4 +22,6 @@ projects-import.js
 
 # Playwright test artifacts
 .playwright-mcp/
-welcome-screen.png
+*-screen.png
+*-sidebar.png
+*-steps.png
