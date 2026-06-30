@@ -15,7 +15,7 @@ const STAGES = [
       "Generate and sign your founding documents (Articles, Regulations, Minutes)",
   },
   {
-    title: "Post-Incorporation",
+    title: "Contract Management",
     description:
       "Complete agreements, counsel deliverables, and tax registration",
   },

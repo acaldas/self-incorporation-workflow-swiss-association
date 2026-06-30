@@ -6,6 +6,7 @@ import {
 } from "document-models/swiss-association";
 import { WizardLayout } from "./components/WizardLayout.js";
 import { StepWelcome } from "./components/StepWelcome.js";
+import { ReadOnlyStepWrapper } from "./components/ReadOnlyStepWrapper.js";
 import { StepAssociationDetails } from "./components/StepAssociationDetails.js";
 import { StepMemberRegistry } from "./components/StepMemberRegistry.js";
 import { StepBoardSetup } from "./components/StepBoardSetup.js";
@@ -13,7 +14,7 @@ import { StepFoundingMeeting } from "./components/StepFoundingMeeting.js";
 import { StepMultisigConfig } from "./components/StepMultisigConfig.js";
 import { StepArticlesOfAssociation } from "./components/StepArticlesOfAssociation.js";
 import { StepMultisigParticipationAgreement } from "./components/StepMultisigParticipationAgreement.js";
-import { StepFinalArchive } from "./components/StepFinalArchive.js";
+import { StepContributorAgreements } from "./components/StepContributorAgreements.js";
 import { StepRegulationGA } from "./components/StepRegulationGA.js";
 import { StepDissolutionDetails } from "./components/StepDissolutionDetails.js";
 import { StepDissolutionResolution } from "./components/StepDissolutionResolution.js";
@@ -69,11 +70,14 @@ export default function Editor() {
     hasMultisig: !!state.multisig,
   };
 
+  // All steps are navigable; future/locked steps render as read-only previews.
   function handleStepClick(step: number) {
-    if (step <= maxStep || step >= DISSOLUTION_FIRST_STEP) {
-      setCurrentStep(step);
-    }
+    setCurrentStep(step);
   }
+
+  // Welcome (step 0) and dissolution steps are never locked.
+  const isCurrentStepLocked =
+    currentStep > maxStep && currentStep < DISSOLUTION_FIRST_STEP;
 
   function renderStep() {
     switch (currentStep) {
@@ -159,9 +163,7 @@ export default function Editor() {
           />
         );
       case 9:
-        return (
-          <StepFinalArchive state={state} onBack={() => setCurrentStep(8)} />
-        );
+        return <StepContributorAgreements onBack={() => setCurrentStep(8)} />;
       case 10:
         return (
           <StepDissolutionDetails
@@ -260,7 +262,11 @@ export default function Editor() {
         maxStep={maxStep}
         stageProgress={stageProgress}
       >
-        {renderStep()}
+        {isCurrentStepLocked ? (
+          <ReadOnlyStepWrapper>{renderStep()}</ReadOnlyStepWrapper>
+        ) : (
+          renderStep()
+        )}
       </WizardLayout>
     </>
   );

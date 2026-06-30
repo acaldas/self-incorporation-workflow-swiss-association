@@ -25,11 +25,10 @@ export interface StageProgress {
 // Maps a navigable step number to its "done" condition, derived from state.
 // The MPA step (8) is satisfied either by signing it or — when no multisig is
 // used — once the entity is constituted (matching the old "no multisig needed"
-// completion). Final Archive (9) has no completion action of its own; it is
-// done once the post-incorporation milestone (payments enabled) is reached.
+// completion). Contributor agreements (9) is a placeholder with no completion
+// state yet; it stays not-done until its templates are wired in.
 function isStepDone(step: number, p: StageProgress): boolean {
   const constituted = p.aoaSigned && p.minutesSigned;
-  const postIncorpDone = constituted && (p.mpaSigned || !p.hasMultisig);
   switch (step) {
     case 1:
       return p.detailsDone;
@@ -48,7 +47,7 @@ function isStepDone(step: number, p: StageProgress): boolean {
     case 8:
       return p.mpaSigned || (!p.hasMultisig && constituted);
     case 9:
-      return postIncorpDone;
+      return false;
     case 10:
       return p.dissolutionDetailsDone;
     case 11:
@@ -161,13 +160,8 @@ function StepRow({
   return (
     <button
       onClick={onClick}
-      disabled={locked}
       className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
-        active
-          ? "bg-red-50"
-          : locked
-            ? "cursor-not-allowed"
-            : "hover:bg-slate-50"
+        active ? "bg-red-50" : "hover:bg-slate-50"
       }`}
     >
       <span
