@@ -2,6 +2,13 @@ import { useState } from "react";
 import { STAGES, DISSOLUTION_FIRST_STEP } from "./stages.js";
 import type { StageDef } from "./stages.js";
 
+// Four-state color system, shared by stage cards and step rows:
+//   done      → GREEN  (underlying data complete)
+//   current   → BLUE   (the step/stage the user is actively on)
+//   available → neutral (reachable, clickable, not yet done)
+//   locked    → subtle GREY (not yet reachable; read-only preview)
+type Status = "done" | "current" | "available" | "locked";
+
 interface MilestoneData {
   title: string;
   reached: boolean;
@@ -81,6 +88,91 @@ function stageAllDone(stage: StageDef, p: StageProgress): boolean {
   return stage.steps.every((s) => isStepDone(s.number, p));
 }
 
+// ---- Color lookups ---------------------------------------------------------
+
+const CARD_BG: Record<Status, string> = {
+  done: "bg-green-50 border-green-200",
+  current: "bg-blue-50 border-blue-200",
+  available: "bg-white border-slate-200",
+  locked: "bg-slate-50 border-slate-200",
+};
+
+const CARD_CIRCLE: Record<Status, string> = {
+  done: "bg-green-500 text-white",
+  current: "bg-blue-600 text-white",
+  available: "bg-slate-200 text-slate-500",
+  locked: "bg-slate-100 text-slate-400",
+};
+
+const CARD_NAME: Record<Status, string> = {
+  done: "text-green-800",
+  current: "text-blue-800",
+  available: "text-slate-700",
+  locked: "text-slate-400",
+};
+
+const CARD_COUNT: Record<Status, string> = {
+  done: "text-green-600",
+  current: "text-blue-600",
+  available: "text-slate-400",
+  locked: "text-slate-300",
+};
+
+const BAR_TRACK: Record<Status, string> = {
+  done: "bg-green-100",
+  current: "bg-blue-100",
+  available: "bg-slate-100",
+  locked: "bg-slate-200",
+};
+
+const BAR_FILL: Record<Status, string> = {
+  done: "bg-green-500",
+  current: "bg-blue-600",
+  available: "bg-slate-400",
+  locked: "bg-slate-300",
+};
+
+const ROW_BG: Record<Status, string> = {
+  done: "hover:bg-slate-50",
+  current: "bg-blue-50",
+  available: "hover:bg-slate-50",
+  locked: "hover:bg-slate-50",
+};
+
+const ROW_CIRCLE: Record<Status, string> = {
+  done: "bg-green-500 text-white",
+  current: "bg-blue-600 text-white",
+  available: "bg-slate-200 text-slate-500",
+  locked: "bg-slate-100 text-slate-400",
+};
+
+const ROW_LABEL: Record<Status, string> = {
+  done: "text-slate-600",
+  current: "text-blue-700 font-semibold",
+  available: "text-slate-700",
+  locked: "text-slate-400",
+};
+
+const DOT_COLOR: Record<Status, string> = {
+  done: "#22c55e",
+  current: "#2563eb",
+  available: "#94a3b8",
+  locked: "#e2e8f0",
+};
+
+// Resolve a single step row's status. `current` wins (you-are-here) over done.
+function getStepStatus(
+  step: number,
+  currentStep: number,
+  maxStep: number,
+  progress: StageProgress,
+): Status {
+  if (step === currentStep) return "current";
+  if (isStepDone(step, progress)) return "done";
+  if (step > maxStep && step < DISSOLUTION_FIRST_STEP) return "locked";
+  return "available";
+}
+
 function MilestoneCard({
   milestone,
   dimmed,
@@ -140,56 +232,28 @@ function CheckIcon({ size = 10 }: { size?: number }) {
   );
 }
 
-interface StepRowProps {
-  number: number;
-  label: string;
-  done: boolean;
-  active: boolean;
-  locked: boolean;
-  onClick: () => void;
-}
-
 function StepRow({
   number,
   label,
-  done,
-  active,
-  locked,
+  status,
   onClick,
-}: StepRowProps) {
+}: {
+  number: number;
+  label: string;
+  status: Status;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
-        active ? "bg-red-50" : "hover:bg-slate-50"
-      }`}
+      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${ROW_BG[status]}`}
     >
       <span
-        className={`w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0 ${
-          active
-            ? "bg-red-600 text-white"
-            : done
-              ? "bg-green-500 text-white"
-              : locked
-                ? "bg-slate-100 text-slate-400"
-                : "bg-slate-200 text-slate-500"
-        }`}
+        className={`w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0 ${ROW_CIRCLE[status]}`}
       >
-        {done && !active ? <CheckIcon size={9} /> : number}
+        {status === "done" ? <CheckIcon size={9} /> : number}
       </span>
-      <span
-        className={`text-[11px] ${
-          active
-            ? "text-red-700 font-semibold"
-            : locked
-              ? "text-slate-400"
-              : done
-                ? "text-slate-500"
-                : "text-slate-700"
-        }`}
-      >
-        {label}
-      </span>
+      <span className={`text-[11px] ${ROW_LABEL[status]}`}>{label}</span>
     </button>
   );
 }
@@ -203,7 +267,7 @@ function StageCard({
   onStepClick,
 }: {
   stage: StageDef;
-  status: "done" | "active" | "locked";
+  status: Status;
   progress: StageProgress;
   currentStep: number;
   maxStep: number;
@@ -216,38 +280,17 @@ function StageCard({
   const fraction = totalCount > 0 ? completedCount / totalCount : 0;
   const milestone = stageMilestone(stage.number, progress);
 
-  const bg =
-    status === "done"
-      ? "bg-green-50 border-green-200"
-      : status === "active"
-        ? "bg-red-50 border-red-200"
-        : "bg-slate-50 border-slate-200";
-
   return (
-    <div className={`border rounded-xl p-2.5 ${bg}`}>
+    <div className={`border rounded-xl p-2.5 ${CARD_BG[status]}`}>
       {/* Header row */}
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5">
           <div
-            className={`w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${
-              status === "done"
-                ? "bg-green-500 text-white"
-                : status === "active"
-                  ? "bg-red-600 text-white"
-                  : "bg-slate-200 text-slate-400"
-            }`}
+            className={`w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${CARD_CIRCLE[status]}`}
           >
             {status === "done" ? <CheckIcon /> : stage.number}
           </div>
-          <span
-            className={`text-[11px] font-semibold ${
-              status === "done"
-                ? "text-green-800"
-                : status === "active"
-                  ? "text-red-800"
-                  : "text-slate-400"
-            }`}
-          >
+          <span className={`text-[11px] font-semibold ${CARD_NAME[status]}`}>
             {stage.name}
           </span>
         </div>
@@ -256,9 +299,7 @@ function StageCard({
             Done
           </span>
         ) : (
-          <span
-            className={`text-[9px] font-semibold ${status === "active" ? "text-red-600" : "text-slate-300"}`}
-          >
+          <span className={`text-[9px] font-semibold ${CARD_COUNT[status]}`}>
             {completedCount} / {totalCount}
           </span>
         )}
@@ -267,10 +308,10 @@ function StageCard({
       {/* Progress bar */}
       {status !== "done" && (
         <div
-          className={`h-[3px] rounded-full overflow-hidden ${status === "active" ? "bg-red-100" : "bg-slate-200"}`}
+          className={`h-[3px] rounded-full overflow-hidden ${BAR_TRACK[status]}`}
         >
           <div
-            className={`h-full rounded-full ${status === "active" ? "bg-red-600" : "bg-slate-300"}`}
+            className={`h-full rounded-full ${BAR_FILL[status]}`}
             style={{ width: `${fraction * 100}%` }}
           />
         </div>
@@ -278,21 +319,15 @@ function StageCard({
 
       {/* Step navigation rows — shown for every stage */}
       <div className="mt-2 flex flex-col gap-0.5">
-        {stage.steps.map((step) => {
-          const locked =
-            step.number > maxStep && step.number < DISSOLUTION_FIRST_STEP;
-          return (
-            <StepRow
-              key={step.number}
-              number={step.number}
-              label={step.label}
-              done={isStepDone(step.number, progress)}
-              active={step.number === currentStep}
-              locked={locked}
-              onClick={() => onStepClick(step.number)}
-            />
-          );
-        })}
+        {stage.steps.map((step) => (
+          <StepRow
+            key={step.number}
+            number={step.number}
+            label={step.label}
+            status={getStepStatus(step.number, currentStep, maxStep, progress)}
+            onClick={() => onStepClick(step.number)}
+          />
+        ))}
       </div>
 
       {/* Milestone */}
@@ -328,15 +363,14 @@ export function ProgressSidebar({
   const total = incorporationSteps.length;
   const pct = total > 0 ? (completed / total) * 100 : 0;
 
-  function getStageStatus(
-    stage: StageDef,
-    index: number,
-  ): "done" | "active" | "locked" {
+  // A stage is current when the user is on one of its steps. It is never
+  // "current" by default — Stage 4 (Dissolution) included.
+  function getStageStatus(stage: StageDef, index: number): Status {
     if (stageAllDone(stage, progress)) return "done";
-    if (stage.number === 4) return "active";
+    if (stage.steps.some((s) => s.number === currentStep)) return "current";
     const prevAllDone =
       index === 0 || stageAllDone(STAGES[index - 1], progress);
-    return prevAllDone ? "active" : "locked";
+    return prevAllDone ? "available" : "locked";
   }
 
   if (collapsed) {
@@ -353,14 +387,7 @@ export function ProgressSidebar({
               <div
                 key={s.number}
                 className="w-1.5 h-1.5 rounded-sm"
-                style={{
-                  background:
-                    st === "done"
-                      ? "#22c55e"
-                      : st === "active"
-                        ? "#dc2626"
-                        : "#e2e8f0",
-                }}
+                style={{ background: DOT_COLOR[st] }}
               />
             );
           })}
@@ -403,7 +430,7 @@ export function ProgressSidebar({
               background:
                 pct >= 100
                   ? "#22c55e"
-                  : `linear-gradient(90deg, #22c55e ${Math.max(0, pct - 15)}%, #dc2626 100%)`,
+                  : `linear-gradient(90deg, #22c55e ${Math.max(0, pct - 15)}%, #2563eb 100%)`,
             }}
           />
         </div>
