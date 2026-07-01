@@ -9,7 +9,8 @@ interface Props {
 
 // ---- Answer types ----------------------------------------------------------
 
-type YesNo = "yes" | "no";
+type MemberCount = "1" | "2" | "3+";
+type Jurisdiction = "same" | "different";
 type Investment = "yes" | "no" | "maybe";
 type Verdict = "aligned" | "misaligned";
 
@@ -52,9 +53,10 @@ function RadioPills<T extends string>({
 }
 
 // ---- Deterministic verdict -------------------------------------------------
-// Gate-only: alignment is driven solely by the non-profit purpose and the
-// investment/dividends questions. Everything else (members, board, etc.) is
-// handled in the workflow steps, not this suitability gate.
+// Gate-only: alignment is driven solely by things the user can honestly self-
+// report — member count and the investment/dividends intent. Whether a purpose
+// qualifies as non-profit under Swiss law is a technical determination handled
+// by a later automated assessment, not self-assessed here.
 
 interface VerdictResult {
   verdict: Verdict;
@@ -63,14 +65,12 @@ interface VerdictResult {
 }
 
 function computeVerdict(
-  nonProfit: YesNo,
+  memberCount: MemberCount,
   investment: Investment,
 ): VerdictResult {
   const reasons: string[] = [];
-  if (nonProfit === "no") {
-    reasons.push(
-      "Swiss associations must pursue a primarily non-profit / ideal purpose; commercial activity is only allowed as secondary to that purpose.",
-    );
+  if (memberCount === "1") {
+    reasons.push("A Swiss association requires at least 2 founding members.");
   }
   if (investment === "yes") {
     reasons.push(
@@ -79,9 +79,14 @@ function computeVerdict(
   }
 
   const notes: string[] = [];
+  if (memberCount === "2") {
+    notes.push(
+      "The minimum number of members for incorporating a Swiss association under Swiss law is 2. They can be natural or legal persons.",
+    );
+  }
   if (investment === "maybe") {
     notes.push(
-      "You indicated you might seek investment later. A Swiss association cannot issue equity or distribute profits, so revisit this check if those plans firm up.",
+      "You indicated you might seek funding later. A Swiss association can't issue equity or distribute profits, but non-equity routes (e.g. grants or SAFTs, which confer no equity or profit rights) may be worth exploring with a qualified professional if those plans firm up.",
     );
   }
 
@@ -115,14 +120,16 @@ const VERDICT_META: Record<
 // ---- Component -------------------------------------------------------------
 
 export function StepSuitability({ onContinue, onBack }: Props) {
-  // Informational free-text only — does NOT affect the verdict (placeholder for
-  // a future AI-assisted assessment).
-  const [purpose, setPurpose] = useState("");
-  const [nonProfit, setNonProfit] = useState<YesNo | null>(null);
+  const [memberCount, setMemberCount] = useState<MemberCount | null>(null);
+  const [jurisdiction, setJurisdiction] = useState<Jurisdiction | null>(null);
   const [investment, setInvestment] = useState<Investment | null>(null);
+  // Informational free-text only — collected for a future automated assessment,
+  // does NOT affect the verdict.
+  const [purpose, setPurpose] = useState("");
 
-  const ready = nonProfit !== null && investment !== null;
-  const result = ready ? computeVerdict(nonProfit, investment) : null;
+  const ready =
+    memberCount !== null && jurisdiction !== null && investment !== null;
+  const result = ready ? computeVerdict(memberCount, investment) : null;
   const meta = result ? VERDICT_META[result.verdict] : null;
 
   return (
@@ -146,29 +153,32 @@ export function StepSuitability({ onContinue, onBack }: Props) {
 
       <SectionCard title="About your organization">
         <FormField
-          label="1. What is your organization's purpose?"
-          hint="Describe what you're building and why."
+          label="1. How many founding members will your association have?"
+          required
         >
-          <textarea
-            value={purpose}
-            onChange={(e) => setPurpose(e.target.value)}
-            rows={4}
-            placeholder="e.g. We fund and maintain open-source developer tooling as a public good…"
-            className="sw-input resize-none"
+          <RadioPills<MemberCount>
+            options={[
+              { value: "1", label: "1" },
+              { value: "2", label: "2" },
+              { value: "3+", label: "3 or more" },
+            ]}
+            value={memberCount}
+            onChange={setMemberCount}
           />
         </FormField>
 
         <FormField
-          label="2. Is your purpose primarily non-profit / public-good (e.g. open source, cultural, social, charitable, educational, scientific, environmental)?"
+          label="2. Will your members be located in the same country, or across different countries?"
+          hint="Detailed per-member locations are collected later, in the Member Registry step."
           required
         >
-          <RadioPills<YesNo>
+          <RadioPills<Jurisdiction>
             options={[
-              { value: "yes", label: "Yes" },
-              { value: "no", label: "No" },
+              { value: "same", label: "Same country" },
+              { value: "different", label: "Different countries" },
             ]}
-            value={nonProfit}
-            onChange={setNonProfit}
+            value={jurisdiction}
+            onChange={setJurisdiction}
           />
         </FormField>
 
@@ -185,6 +195,26 @@ export function StepSuitability({ onContinue, onBack }: Props) {
             value={investment}
             onChange={setInvestment}
           />
+        </FormField>
+
+        <FormField
+          label="4. What is your organization's purpose?"
+          hint="Describe what you're building and why."
+        >
+          <textarea
+            value={purpose}
+            onChange={(e) => setPurpose(e.target.value)}
+            rows={4}
+            placeholder="e.g. We fund and maintain open-source developer tooling as a public good…"
+            className="sw-input resize-none"
+          />
+          <div className="mt-2 p-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-700">
+              An automated assessment of whether this purpose fits a Swiss
+              association's non-profit requirements is coming soon. For now,
+              this field is informational.
+            </p>
+          </div>
         </FormField>
       </SectionCard>
 
@@ -231,7 +261,7 @@ export function StepSuitability({ onContinue, onBack }: Props) {
 
       {!ready && (
         <p className="text-xs text-slate-400">
-          Answer questions 2 and 3 to see your result.
+          Answer questions 1, 2 and 3 to see your result.
         </p>
       )}
 
