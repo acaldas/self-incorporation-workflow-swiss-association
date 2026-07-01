@@ -2,6 +2,7 @@ import { SectionCard } from "./SectionCard.js";
 
 interface Props {
   onNext: () => void;
+  onCheckSuitability: () => void;
 }
 
 const STAGES = [
@@ -27,7 +28,7 @@ const REQUIREMENTS = [
   "Your association's purpose and registered address",
 ];
 
-export function StepWelcome({ onNext }: Props) {
+export function StepWelcome({ onNext, onCheckSuitability }: Props) {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
@@ -40,6 +41,14 @@ export function StepWelcome({ onNext }: Props) {
           generated, signed, and stored as you go.
         </p>
       </div>
+
+      <button
+        onClick={onCheckSuitability}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-300 hover:bg-blue-100 transition-colors"
+      >
+        <span aria-hidden="true">🧭</span>
+        Check if a Swiss association fits your needs
+      </button>
 
       <SectionCard title="What you'll do">
         <ol className="space-y-4">
