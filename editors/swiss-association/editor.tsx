@@ -6,6 +6,7 @@ import {
 } from "document-models/swiss-association";
 import { WizardLayout } from "./components/WizardLayout.js";
 import { StepWelcome } from "./components/StepWelcome.js";
+import { StepSuitability } from "./components/StepSuitability.js";
 import { ReadOnlyStepWrapper } from "./components/ReadOnlyStepWrapper.js";
 import { StepAssociationDetails } from "./components/StepAssociationDetails.js";
 import { StepMemberRegistry } from "./components/StepMemberRegistry.js";
@@ -47,6 +48,8 @@ export default function Editor() {
         : 8
       : 7;
   const DISSOLUTION_FIRST_STEP = 10;
+  // Optional Suitability side-screen, reachable from Welcome (not a numbered step).
+  const SUITABILITY_STEP = -1;
 
   const stageProgress: StageProgress = {
     detailsDone: !!(
@@ -81,8 +84,20 @@ export default function Editor() {
 
   function renderStep() {
     switch (currentStep) {
+      case SUITABILITY_STEP:
+        return (
+          <StepSuitability
+            onContinue={() => setCurrentStep(1)}
+            onBack={() => setCurrentStep(0)}
+          />
+        );
       case 0:
-        return <StepWelcome onNext={() => setCurrentStep(1)} />;
+        return (
+          <StepWelcome
+            onNext={() => setCurrentStep(1)}
+            onCheckSuitability={() => setCurrentStep(SUITABILITY_STEP)}
+          />
+        );
       case 1:
         return (
           <StepAssociationDetails
