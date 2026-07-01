@@ -56,7 +56,8 @@ function RadioPills<T extends string>({
 // Gate-only: alignment is driven solely by things the user can honestly self-
 // report — member count and the investment/dividends intent. Whether a purpose
 // qualifies as non-profit under Swiss law is a technical determination handled
-// by a later automated assessment, not self-assessed here.
+// by a later automated assessment, not self-assessed here. Member jurisdiction
+// only adds a neutral heads-up note; it never changes the verdict.
 
 interface VerdictResult {
   verdict: Verdict;
@@ -66,6 +67,7 @@ interface VerdictResult {
 
 function computeVerdict(
   memberCount: MemberCount,
+  jurisdiction: Jurisdiction,
   investment: Investment,
 ): VerdictResult {
   const reasons: string[] = [];
@@ -81,7 +83,12 @@ function computeVerdict(
   const notes: string[] = [];
   if (memberCount === "2") {
     notes.push(
-      "The minimum number of members for incorporating a Swiss association under Swiss law is 2. They can be natural or legal persons.",
+      "Two members (natural or legal persons) is the legal minimum, so a Swiss association is viable — but with only 2 members the tax-residency risk is higher. Three or more members is recommended.",
+    );
+  }
+  if (jurisdiction === "same") {
+    notes.push(
+      "Heads-up: if most members operate from a single non-Swiss jurisdiction, this can raise tax-residency considerations for the association, because a small association is often effectively managed by its members. You'll review this in more detail when you add members, and it's worth discussing with a tax advisor. This is not tax advice.",
     );
   }
   if (investment === "maybe") {
@@ -129,7 +136,9 @@ export function StepSuitability({ onContinue, onBack }: Props) {
 
   const ready =
     memberCount !== null && jurisdiction !== null && investment !== null;
-  const result = ready ? computeVerdict(memberCount, investment) : null;
+  const result = ready
+    ? computeVerdict(memberCount, jurisdiction, investment)
+    : null;
   const meta = result ? VERDICT_META[result.verdict] : null;
 
   return (
