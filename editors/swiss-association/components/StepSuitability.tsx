@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { SectionCard } from "./SectionCard.js";
 import { FormField } from "./FormField.js";
+import { assessPurpose } from "./assessPurposeClient.js";
+import type { PurposeAssessment } from "./assessPurposeClient.js";
 
 interface Props {
   onContinue: () => void;
@@ -124,15 +126,41 @@ const VERDICT_META: Record<
   },
 };
 
+// Informational label for the AI purpose assessment — deliberately neutral
+// (NOT a red/green pass-fail). It describes against the legal axis; it does not
+// decide for the user.
+function verdictLabel(verdict: string): string {
+  switch (verdict) {
+    case "likely_ideal":
+      return "Appears primarily ideal / non-commercial in purpose";
+    case "likely_economic":
+      return "Appears primarily economic (gain for members)";
+    default:
+      return "Not clearly determinable from this description";
+  }
+}
+
 // ---- Component -------------------------------------------------------------
 
 export function StepSuitability({ onContinue, onBack }: Props) {
   const [memberCount, setMemberCount] = useState<MemberCount | null>(null);
   const [jurisdiction, setJurisdiction] = useState<Jurisdiction | null>(null);
   const [investment, setInvestment] = useState<Investment | null>(null);
-  // Informational free-text only — collected for a future automated assessment,
-  // does NOT affect the verdict.
+  // Informational free-text. Feeds the optional AI purpose assessment below,
+  // which is informational only and does NOT affect the deterministic verdict
+  // or block proceeding.
   const [purpose, setPurpose] = useState("");
+  const [assessment, setAssessment] = useState<PurposeAssessment | null>(null);
+  const [assessing, setAssessing] = useState(false);
+
+  async function handleAssess() {
+    if (!purpose.trim() || assessing) return;
+    setAssessing(true);
+    setAssessment(null);
+    const outcome = await assessPurpose(purpose.trim());
+    setAssessment(outcome);
+    setAssessing(false);
+  }
 
   const ready =
     memberCount !== null && jurisdiction !== null && investment !== null;
@@ -217,12 +245,45 @@ export function StepSuitability({ onContinue, onBack }: Props) {
             placeholder="e.g. We fund and maintain open-source developer tooling as a public good…"
             className="sw-input resize-none"
           />
-          <div className="mt-2 p-2.5 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs text-blue-700">
-              An automated assessment of whether this purpose fits a Swiss
-              association's non-profit requirements is coming soon. For now,
-              this field is informational.
-            </p>
+          <div className="mt-3 space-y-3">
+            <button
+              onClick={() => void handleAssess()}
+              disabled={!purpose.trim() || assessing}
+              className="sw-btn-secondary"
+            >
+              {assessing ? "Assessing…" : "Assess purpose"}
+            </button>
+
+            {assessment && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-700">
+                  Automated assessment
+                </span>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  {verdictLabel(assessment.verdict)}
+                </p>
+                <p className="mt-1 text-sm text-slate-700">
+                  {assessment.explanation}
+                </p>
+                {assessment.considerations.length > 0 && (
+                  <ul className="mt-2 space-y-1">
+                    {assessment.considerations.map((c, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-2 text-xs text-slate-600"
+                      >
+                        <span className="mt-0.5 flex-shrink-0">›</span>
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="mt-3 pt-2 border-t border-blue-200 text-xs text-slate-500">
+                  Automated, informational only — not legal advice. Confirm with
+                  qualified Swiss counsel.
+                </p>
+              </div>
+            )}
           </div>
         </FormField>
       </SectionCard>
