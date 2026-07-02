@@ -149,11 +149,41 @@ Place: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&
 
 # Signature Page
 
-## ${associationName} — Articles of Association
+## Articles of Association of ${associationName}
 
 The undersigned board members hereby confirm their adoption of the Articles of Association of **${associationName}**, executed on **${date}** in **${city}**, Switzerland.
 
 ${signerBlocks}`;
+}
+
+// --- English-only AoA output (MVP) ------------------------------------------
+// The AoA template body is a bilingual table: | German | English |  |  |.
+// For the MVP we render English only, by projecting the English column. Flip
+// AOA_ENGLISH_ONLY to false to restore the full bilingual output — the German
+// content stays untouched in the template and the model (nameDe, purposeDe,
+// German template strings), it is only suppressed at render time.
+const AOA_ENGLISH_ONLY = true;
+
+function toEnglishOnlyTable(markdown: string): string {
+  return markdown
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.trim();
+      // Only touch bilingual table rows; leave everything else as-is.
+      if (!(trimmed.startsWith("|") && trimmed.endsWith("|"))) return line;
+      const cells = trimmed.slice(1, -1).split("|");
+      if (cells.length < 2) return line;
+      // Table separator row (dashes) -> single-column separator.
+      if (
+        cells.some((c) => c.includes("-")) &&
+        cells.every((c) => /^[\s:-]*$/.test(c))
+      ) {
+        return "| --- |";
+      }
+      // Keep only the English column (index 1); drop German + padding columns.
+      return `| ${cells[1].trim()} |`;
+    })
+    .join("\n");
 }
 
 export function buildAoaMarkdown(state: SwissAssociationState) {
@@ -178,9 +208,17 @@ export function buildAoaMarkdown(state: SwissAssociationState) {
     { token: "[MJP domicile provider]", value: resolveAddress(state) },
   ]);
 
-  // Strip the description/parameter preamble and add a clean title
+  // Strip the description/parameter preamble and add a clean title.
+  // English-titled document: use the English name (nameEn); fall back to a bare
+  // title (no dangling "of ") when it is unset.
   template = stripAoaPreamble(template);
-  template = `# ${associationName} Articles of Association\n\n` + template;
+  // MVP: render the AoA English-only (suppress the German column).
+  if (AOA_ENGLISH_ONLY) template = toEnglishOnlyTable(template);
+  const englishName = state.nameEn?.trim();
+  const aoaTitle = englishName
+    ? `Articles of Association of ${englishName}`
+    : "Articles of Association";
+  template = `# ${aoaTitle}\n\n` + template;
 
   if (!state.isPersonalunion) {
     template = replaceToken(
