@@ -25,3 +25,7 @@ projects-import.js
 *-screen.png
 *-sidebar.png
 *-steps.png
+
+# Environment / secrets
+.env
+.env.*

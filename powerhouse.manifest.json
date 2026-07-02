@@ -23,6 +23,11 @@
     }
   ],
   "processors": [],
-  "subgraphs": [],
+  "subgraphs": [
+    {
+      "name": "purpose-assessment",
+      "id": "purpose-assessment"
+    }
+  ],
   "config": []
 }
