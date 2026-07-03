@@ -97,6 +97,15 @@ function toMemberLines(state: SwissAssociationState) {
   );
 }
 
+// Attendee line for the founding minutes: "Name/Entity + representative, City".
+// The representative is only shown for members that have one (e.g. legal entities).
+function toFoundingAttendeeLines(state: SwissAssociationState) {
+  return (state.members || []).map((member) => {
+    const rep = member.representative ? ` + ${member.representative}` : "";
+    return `${member.name}${rep}, ${member.residenceOrCity}`;
+  });
+}
+
 function toBoardMemberLines(state: SwissAssociationState) {
   return (state.boardMembers || []).map((member) =>
     formatMemberLine(
@@ -210,29 +219,71 @@ export function buildAoaMarkdown(state: SwissAssociationState) {
 export function buildFoundingMinutesMarkdown(state: SwissAssociationState) {
   const associationName = state.nameEn || state.nameDe || "Association";
   const date = formatDate(state.foundingDate);
-  const attendees = formatList(toMemberLines(state));
   const chairName = state.chairName || "Chair";
   const secretaryName = state.secretaryName || "Secretary";
 
-  // Strip preamble BEFORE replacements so the anchor text is still intact
+  // Registered (Swiss) seat — set in Step 1. Distinct from and independent of
+  // the meeting venue: the meeting may be held abroad while the seat stays Swiss.
+  const seatCity = state.seatCity || "[Registered Seat]";
+
+  // Meeting place — entered in the Founding Meeting step (Step 4).
+  const meetingPlaceSentence = state.meetingIsOnline
+    ? "The founding meeting was held online."
+    : `The founding meeting was held at ${
+        state.meetingVenue || "[Meeting Venue]"
+      }.`;
+  const meetingPlaceLabel = state.meetingIsOnline
+    ? "Online"
+    : state.meetingVenue || "[Meeting Venue]";
+
+  // Optional local counsel (e.g. a Swiss counsel like MME). Empty = none.
+  const counselName = state.counselName?.trim() || "";
+
+  // Attendees = founding members (Name/Entity + representative, City).
+  const memberLines = toFoundingAttendeeLines(state);
+  const membersBlock = formatList(memberLines);
+  // Top attendance list additionally names local counsel when present.
+  const attendantBlock = formatList(
+    counselName
+      ? [...memberLines, `${counselName} (local counsel)`]
+      : memberLines,
+  );
+
+  // The template opens with an authoring legend (title, "Description",
+  // "Variable Parameters", "Fix Parameters") that must NOT appear in the
+  // executed document. Strip everything before the real minutes heading.
+  // Anchor on the heading's distinctive "\[Association Name\]" token — the
+  // legend title above it is "**Founding Meeting Minutes**", so a bare
+  // "**Founding Meeting" anchor would wrongly match the title and strip nothing.
   let raw = foundingMinutesTemplateRaw;
-  const bodyStart = raw.indexOf("**Founding Meeting");
+  const bodyStart = raw.indexOf("**Founding Meeting  \\[Association Name\\]");
   if (bodyStart > 0) raw = raw.slice(bodyStart);
 
   let template = applyReplacements(raw, [
     { token: "[Association Name]", value: associationName },
+    // Match the name WITH its trailing common-noun "association" first, so a
+    // name that already ends in "Association" doesn't read "… association".
+    {
+      token: "Powerhouse Genesis Operational Hub association",
+      value: associationName,
+    },
     { token: "Powerhouse Genesis Operational Hub", value: associationName },
     { token: "[Association name]", value: associationName },
     { token: "[Date]", value: date },
+    // Registered (Swiss) seat — replace the hardcoded "Zug" literals.
     {
-      token: "Attendees (Name / Company + representative, City)",
-      value: attendees,
+      token: "registered seat in Zug",
+      value: `registered seat in ${seatCity}`,
     },
+    { token: "Registered seat: Zug", value: `Registered seat: ${seatCity}` },
+    // Meeting place — preamble label first, then the body line (see below).
     {
-      token: "Attendees (Name / Company \\+ representative, City)",
-      value: attendees,
+      token: "Meeting Place: Online",
+      value: `Meeting Place: ${meetingPlaceLabel}`,
     },
-    { token: "[Attendees / Founding Members]", value: attendees },
+    { token: "*Place: Online*", value: `*${meetingPlaceSentence}*` },
+    // Section 5 signatory list = founding members only (counsel does not sign for the association).
+    { token: "[Attendees / Founding Members]", value: membersBlock },
     { token: "[Role, Chair]", value: chairName },
     {
       token: "Chair [Role]",
@@ -245,29 +296,45 @@ export function buildFoundingMinutesMarkdown(state: SwissAssociationState) {
     { token: "[signatory power]", value: "joint signatory power" },
   ]);
 
+  // Top "Attendant" section lists the same placeholder three times, each wrapped
+  // in a single-asterisk italic pair (*…*). Replace the WHOLE wrapped line — not
+  // just the inner token — otherwise the empty duplicates leave orphan "**"
+  // markers. The first gets the full (unwrapped) attendance block so it renders
+  // as a real bullet list; the remaining duplicates are removed entirely.
+  template = replaceTokenOnce(
+    template,
+    "*Attendees (Name / Company \\+ representative, City)*",
+    attendantBlock,
+  );
+  template = replaceToken(
+    template,
+    "*Attendees (Name / Company \\+ representative, City)*",
+    "",
+  );
+  template = replaceToken(
+    template,
+    "*Attendees (Name / Company + representative, City)*",
+    "",
+  );
+
   template = replaceToken(
     template,
     "CARS as Secretary of the meeting",
     `${secretaryName} as Secretary of the meeting`,
   );
 
-  // Replace signatory lines using regex to handle curly/straight quote variants
+  // Replace the two signatory placeholder lines. In the template the chair's
+  // line has no leading curly quote ("Signatory\u201d: \u2026") and the secretary's does
+  // ("\u201cSignatory\u201d: \u2026"). Replace the leading-quote (secretary) line FIRST so the
+  // chair pattern below can't also match inside the secretary line.
   template = template
     .replace(
       /\u201cSignatory\u201d: Signing Party \(Name, Entity, Role\)\)/,
-      `${chairName} (Chair)`,
-    )
-    .replace(
-      /\u201cSignatory\u201d: Signing Party \(Name, Entity, Role\)\)/,
       `${secretaryName} (Secretary)`,
     )
     .replace(
       /Signatory\u201d: Signing Party \(Name, Entity, Role\)\)/,
       `${chairName} (Chair)`,
-    )
-    .replace(
-      /Signatory\u201d: Signing Party \(Name, Entity, Role\)\)/,
-      `${secretaryName} (Secretary)`,
     );
 
   // Prepend clean title
@@ -307,6 +374,22 @@ Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n
 
 Place: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 `;
+
+  // Optional local counsel signature block — only when counsel was named.
+  if (counselName) {
+    template += `
+---
+
+**${counselName}**
+Local Counsel
+
+Signature: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+Place: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+`;
+  }
 
   return appendPlaceholderReport(template, "Founding Meeting Minutes");
 }
