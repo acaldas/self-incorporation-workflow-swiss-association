@@ -104,4 +104,48 @@ describe("BoardOperations", () => {
     );
     expect(updatedDocument.operations.global[0].index).toEqual(0);
   });
+
+  it("should record an in-person venue and local counsel", () => {
+    const document = utils.createDocument();
+
+    const updatedDocument = reducer(
+      document,
+      setMeetingRoles({
+        chairName: "Alice",
+        chairRole: "Chair",
+        secretaryName: "Bob",
+        secretaryRole: "Secretary",
+        meetingIsOnline: false,
+        meetingVenue: "MME offices, Zurich",
+        counselName: "MME",
+      }),
+    );
+
+    expect(updatedDocument.state.global.meetingIsOnline).toBe(false);
+    expect(updatedDocument.state.global.meetingVenue).toBe(
+      "MME offices, Zurich",
+    );
+    expect(updatedDocument.state.global.counselName).toBe("MME");
+  });
+
+  it("should clear the venue when the meeting is online and drop empty counsel", () => {
+    const document = utils.createDocument();
+
+    const updatedDocument = reducer(
+      document,
+      setMeetingRoles({
+        chairName: "Alice",
+        chairRole: "Chair",
+        secretaryName: "Bob",
+        secretaryRole: "Secretary",
+        meetingIsOnline: true,
+        meetingVenue: "ignored when online",
+        counselName: "",
+      }),
+    );
+
+    expect(updatedDocument.state.global.meetingIsOnline).toBe(true);
+    expect(updatedDocument.state.global.meetingVenue).toBeNull();
+    expect(updatedDocument.state.global.counselName).toBeNull();
+  });
 });

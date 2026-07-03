@@ -9,6 +9,11 @@ export const swissAssociationBoardOperations: SwissAssociationBoardOperations =
       state.chairRole = action.input.chairRole;
       state.secretaryName = action.input.secretaryName;
       state.secretaryRole = action.input.secretaryRole;
+      state.meetingIsOnline = action.input.meetingIsOnline;
+      state.meetingVenue = action.input.meetingIsOnline
+        ? null
+        : action.input.meetingVenue || null;
+      state.counselName = action.input.counselName || null;
     },
     addBoardMemberOperation(state, action) {
       if (!state.boardMembers) state.boardMembers = [];

@@ -269,6 +269,9 @@ export function SetMeetingRolesInputSchema(): z.ZodObject<
   return z.object({
     chairName: z.string(),
     chairRole: z.string(),
+    counselName: z.string().nullish(),
+    meetingIsOnline: z.boolean(),
+    meetingVenue: z.string().nullish(),
     secretaryName: z.string(),
     secretaryRole: z.string(),
   });
@@ -326,6 +329,7 @@ export function SwissAssociationStateSchema(): z.ZodObject<
     boardMembers: z.array(z.lazy(() => AssociationMemberSchema())).nullish(),
     chairName: z.string().nullish(),
     chairRole: z.string().nullish(),
+    counselName: z.string().nullish(),
     currentPhase: z.number().nullish(),
     customNotes: z.array(z.string()),
     dissolution: z.lazy(() => DissolutionSchema().nullish()),
@@ -340,6 +344,8 @@ export function SwissAssociationStateSchema(): z.ZodObject<
     incorporationCompletedAt: z.iso.datetime().nullish(),
     isPersonalunion: z.boolean().nullish(),
     languageClauseNeedsUpdate: z.boolean().nullish(),
+    meetingIsOnline: z.boolean().nullish(),
+    meetingVenue: z.string().nullish(),
     members: z.array(z.lazy(() => AssociationMemberSchema())),
     membershipFee: z.string().nullish(),
     mpaDocument: z.lazy(() => GeneratedStage2DocumentSchema().nullish()),
