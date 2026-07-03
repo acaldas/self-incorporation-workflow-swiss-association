@@ -115,6 +115,9 @@ type SwissAssociationState {
   chairRole: String
   secretaryName: String
   secretaryRole: String
+  meetingIsOnline: Boolean
+  meetingVenue: String
+  counselName: String
   multisig: MultisigConfig
   stage2Started: Boolean
   aoaDocument: GeneratedStage2Document
@@ -217,6 +220,9 @@ input SetMeetingRolesInput {
   chairRole: String!
   secretaryName: String!
   secretaryRole: String!
+  meetingIsOnline: Boolean!
+  meetingVenue: String
+  counselName: String
 }
 
 # multisig

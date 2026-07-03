@@ -192,6 +192,9 @@ export type SetFoundingDateInput = {
 export type SetMeetingRolesInput = {
   chairName: Scalars["String"]["input"];
   chairRole: Scalars["String"]["input"];
+  counselName?: InputMaybe<Scalars["String"]["input"]>;
+  meetingIsOnline: Scalars["Boolean"]["input"];
+  meetingVenue?: InputMaybe<Scalars["String"]["input"]>;
   secretaryName: Scalars["String"]["input"];
   secretaryRole: Scalars["String"]["input"];
 };
@@ -235,6 +238,7 @@ export type SwissAssociationState = {
   boardMembers: Maybe<Array<AssociationMember>>;
   chairName: Maybe<Scalars["String"]["output"]>;
   chairRole: Maybe<Scalars["String"]["output"]>;
+  counselName: Maybe<Scalars["String"]["output"]>;
   currentPhase: Maybe<Scalars["Int"]["output"]>;
   customNotes: Array<Scalars["String"]["output"]>;
   dissolution: Maybe<Dissolution>;
@@ -245,6 +249,8 @@ export type SwissAssociationState = {
   incorporationCompletedAt: Maybe<Scalars["DateTime"]["output"]>;
   isPersonalunion: Maybe<Scalars["Boolean"]["output"]>;
   languageClauseNeedsUpdate: Maybe<Scalars["Boolean"]["output"]>;
+  meetingIsOnline: Maybe<Scalars["Boolean"]["output"]>;
+  meetingVenue: Maybe<Scalars["String"]["output"]>;
   members: Array<AssociationMember>;
   membershipFee: Maybe<Scalars["String"]["output"]>;
   mpaDocument: Maybe<GeneratedStage2Document>;

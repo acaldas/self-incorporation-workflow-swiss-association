@@ -25,6 +25,11 @@ export function StepFoundingMeeting({
 }: Props) {
   const [chairName, setChairName] = useState(state.chairName ?? "");
   const [secretaryName, setSecretaryName] = useState(state.secretaryName ?? "");
+  const [meetingIsOnline, setMeetingIsOnline] = useState(
+    state.meetingIsOnline ?? true,
+  );
+  const [meetingVenue, setMeetingVenue] = useState(state.meetingVenue ?? "");
+  const [counselName, setCounselName] = useState(state.counselName ?? "");
   const [rolesSaved, setRolesSaved] = useState(
     !!(state.chairName && state.secretaryName),
   );
@@ -36,12 +41,18 @@ export function StepFoundingMeeting({
         chairRole: state.chairRole ?? "Chair",
         secretaryName,
         secretaryRole: state.secretaryRole ?? "Secretary",
+        meetingIsOnline,
+        meetingVenue: meetingIsOnline ? null : meetingVenue.trim() || null,
+        counselName: counselName.trim() || null,
       }),
     );
     setRolesSaved(true);
   }
 
-  const isValid = chairName.trim() !== "" && secretaryName.trim() !== "";
+  const isValid =
+    chairName.trim() !== "" &&
+    secretaryName.trim() !== "" &&
+    (meetingIsOnline || meetingVenue.trim() !== "");
   const phaseAComplete =
     state.aoaDocument?.isSigned === true &&
     state.foundingMinutesDocument?.isSigned === true;
@@ -77,6 +88,41 @@ export function StepFoundingMeeting({
               value={secretaryName}
               onChange={(e) => setSecretaryName(e.target.value)}
               placeholder="Full legal name"
+              className="sw-input"
+            />
+          </FormField>
+          <FormField label="Meeting held online?">
+            <label className="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={meetingIsOnline}
+                onChange={(e) => setMeetingIsOnline(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <span>
+                {meetingIsOnline
+                  ? "Yes — the founding meeting is held online."
+                  : "No — held at a physical venue."}
+              </span>
+            </label>
+          </FormField>
+          {!meetingIsOnline && (
+            <FormField label="Meeting venue" required>
+              <input
+                type="text"
+                value={meetingVenue}
+                onChange={(e) => setMeetingVenue(e.target.value)}
+                placeholder="Venue name and location (e.g. MME offices, Zurich)"
+                className="sw-input"
+              />
+            </FormField>
+          )}
+          <FormField label="Local counsel present (name)">
+            <input
+              type="text"
+              value={counselName}
+              onChange={(e) => setCounselName(e.target.value)}
+              placeholder="Optional — leave empty if none (e.g. MME)"
               className="sw-input"
             />
           </FormField>
