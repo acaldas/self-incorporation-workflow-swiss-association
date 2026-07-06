@@ -96,6 +96,36 @@ type Dissolution {
   remainingAssetsSummary: String
 }
 
+enum ContributorTermType {
+  FIXED_DATE
+  ON_SOW_COMPLETION
+  NOTICE
+}
+
+type ContributorAgreement {
+  id: OID!
+  contractorIsEntity: Boolean!
+  termType: ContributorTermType!
+  contractorName: String
+  contractorNationality: String
+  contractorAddress: String
+  entityName: String
+  entityType: String
+  entityJurisdiction: String
+  role: String
+  contractDate: Date
+  workStartDate: Date
+  workEndDate: Date
+  terminationNoticePeriod: String
+  sowNumber: String
+  services: String
+  fteHours: String
+  compensation: String
+  denominationType: String
+  denominationCurrency: String
+  generatedDocument: GeneratedStage2Document
+}
+
 type SwissAssociationState {
   nameEn: String
   nameDe: String
@@ -133,6 +163,7 @@ type SwissAssociationState {
   belowRecommendedMemberCount: Boolean
   registeredAddressConfirmed: Boolean
   customNotes: [String!]!
+  contributorAgreements: [ContributorAgreement!]!
 }
 
 # association
@@ -281,4 +312,66 @@ input SetDissolutionDetailsInput {
   assetRecipient: String
   executingPersons: String
   remainingAssetsSummary: String
+}
+
+# contributors
+
+input AddContributorAgreementInput {
+  id: OID!
+  contractorIsEntity: Boolean!
+  termType: ContributorTermType!
+  contractorName: String
+  contractorNationality: String
+  contractorAddress: String
+  entityName: String
+  entityType: String
+  entityJurisdiction: String
+  role: String
+  contractDate: Date
+  workStartDate: Date
+  workEndDate: Date
+  terminationNoticePeriod: String
+  sowNumber: String
+  services: String
+  fteHours: String
+  compensation: String
+  denominationType: String
+  denominationCurrency: String
+}
+
+input UpdateContributorAgreementInput {
+  id: OID!
+  contractorIsEntity: Boolean
+  termType: ContributorTermType
+  contractorName: String
+  contractorNationality: String
+  contractorAddress: String
+  entityName: String
+  entityType: String
+  entityJurisdiction: String
+  role: String
+  contractDate: Date
+  workStartDate: Date
+  workEndDate: Date
+  terminationNoticePeriod: String
+  sowNumber: String
+  services: String
+  fteHours: String
+  compensation: String
+  denominationType: String
+  denominationCurrency: String
+}
+
+input RemoveContributorAgreementInput {
+  id: OID!
+}
+
+input SetContributorAgreementMarkdownInput {
+  id: OID!
+  markdown: String!
+}
+
+input MarkContributorAgreementSignedInput {
+  id: OID!
+  signedAt: DateTime!
 }

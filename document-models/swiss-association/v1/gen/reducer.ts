@@ -6,6 +6,7 @@ import type { SwissAssociationPHState } from "document-models/swiss-association/
 
 import { swissAssociationAssociationOperations } from "../src/reducers/association.js";
 import { swissAssociationBoardOperations } from "../src/reducers/board.js";
+import { swissAssociationContributorsOperations } from "../src/reducers/contributors.js";
 import { swissAssociationDissolutionOperations } from "../src/reducers/dissolution.js";
 import { swissAssociationDocumentsOperations } from "../src/reducers/documents.js";
 import { swissAssociationMembersOperations } from "../src/reducers/members.js";
@@ -14,15 +15,19 @@ import { swissAssociationWorkflowOperations } from "../src/reducers/workflow.js"
 
 import {
   AddBoardMemberInputSchema,
+  AddContributorAgreementInputSchema,
   AddMemberInputSchema,
   AddNoteInputSchema,
   AdvancePhaseInputSchema,
   CopyFoundingMembersToBoardInputSchema,
+  MarkContributorAgreementSignedInputSchema,
   MarkStage2DocumentSignedInputSchema,
   RemoveBoardMemberInputSchema,
+  RemoveContributorAgreementInputSchema,
   RemoveMemberInputSchema,
   SetAssociationNameInputSchema,
   SetAssociationSeatInputSchema,
+  SetContributorAgreementMarkdownInputSchema,
   SetDissolutionDetailsInputSchema,
   SetFiscalDetailsInputSchema,
   SetFoundingDateInputSchema,
@@ -32,6 +37,7 @@ import {
   SetStage2DocumentMarkdownInputSchema,
   StartStage_2InputSchema,
   UpdateBoardMemberInputSchema,
+  UpdateContributorAgreementInputSchema,
   UpdateMemberInputSchema,
   UpdatePhaseStatusInputSchema,
 } from "./schema/zod.js";
@@ -289,6 +295,66 @@ const stateReducer: StateReducer<SwissAssociationPHState> = (
       SetDissolutionDetailsInputSchema().parse(action.input);
 
       swissAssociationDissolutionOperations.setDissolutionDetailsOperation(
+        (state as any)[action.scope],
+        action as any,
+        dispatch,
+      );
+
+      break;
+    }
+
+    case "ADD_CONTRIBUTOR_AGREEMENT": {
+      AddContributorAgreementInputSchema().parse(action.input);
+
+      swissAssociationContributorsOperations.addContributorAgreementOperation(
+        (state as any)[action.scope],
+        action as any,
+        dispatch,
+      );
+
+      break;
+    }
+
+    case "UPDATE_CONTRIBUTOR_AGREEMENT": {
+      UpdateContributorAgreementInputSchema().parse(action.input);
+
+      swissAssociationContributorsOperations.updateContributorAgreementOperation(
+        (state as any)[action.scope],
+        action as any,
+        dispatch,
+      );
+
+      break;
+    }
+
+    case "REMOVE_CONTRIBUTOR_AGREEMENT": {
+      RemoveContributorAgreementInputSchema().parse(action.input);
+
+      swissAssociationContributorsOperations.removeContributorAgreementOperation(
+        (state as any)[action.scope],
+        action as any,
+        dispatch,
+      );
+
+      break;
+    }
+
+    case "SET_CONTRIBUTOR_AGREEMENT_MARKDOWN": {
+      SetContributorAgreementMarkdownInputSchema().parse(action.input);
+
+      swissAssociationContributorsOperations.setContributorAgreementMarkdownOperation(
+        (state as any)[action.scope],
+        action as any,
+        dispatch,
+      );
+
+      break;
+    }
+
+    case "MARK_CONTRIBUTOR_AGREEMENT_SIGNED": {
+      MarkContributorAgreementSignedInputSchema().parse(action.input);
+
+      swissAssociationContributorsOperations.markContributorAgreementSignedOperation(
         (state as any)[action.scope],
         action as any,
         dispatch,

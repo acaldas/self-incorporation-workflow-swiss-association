@@ -3,14 +3,18 @@
 import * as z from "zod";
 import type {
   AddBoardMemberInput,
+  AddContributorAgreementInput,
   AddMemberInput,
   AddNoteInput,
   AdvancePhaseInput,
   AssociationMember,
+  ContributorAgreement,
+  ContributorTermType,
   CopyFoundingMembersToBoardInput,
   Dissolution,
   DissolutionResolutionForm,
   GeneratedStage2Document,
+  MarkContributorAgreementSignedInput,
   MarkStage2DocumentSignedInput,
   MemberType,
   MultisigConfig,
@@ -18,9 +22,11 @@ import type {
   PhaseStatus,
   PrimaryLanguage,
   RemoveBoardMemberInput,
+  RemoveContributorAgreementInput,
   RemoveMemberInput,
   SetAssociationNameInput,
   SetAssociationSeatInput,
+  SetContributorAgreementMarkdownInput,
   SetDissolutionDetailsInput,
   SetFiscalDetailsInput,
   SetFoundingDateInput,
@@ -32,6 +38,7 @@ import type {
   StartStage_2Input,
   SwissAssociationState,
   UpdateBoardMemberInput,
+  UpdateContributorAgreementInput,
   UpdateMemberInput,
   UpdatePhaseStatusInput,
 } from "./types.js";
@@ -48,6 +55,12 @@ export const isDefinedNonNullAny = (v: any): v is definedNonNullAny =>
 export const definedNonNullAnySchema = z
   .any()
   .refine((v) => isDefinedNonNullAny(v));
+
+export const ContributorTermTypeSchema = z.enum([
+  "FIXED_DATE",
+  "NOTICE",
+  "ON_SOW_COMPLETION",
+]);
 
 export const DissolutionResolutionFormSchema = z.enum([
   "PHYSICAL",
@@ -84,6 +97,33 @@ export function AddBoardMemberInputSchema(): z.ZodObject<
     representative: z.string().nullish(),
     residenceOrCity: z.string(),
     type: MemberTypeSchema,
+  });
+}
+
+export function AddContributorAgreementInputSchema(): z.ZodObject<
+  Properties<AddContributorAgreementInput>
+> {
+  return z.object({
+    compensation: z.string().nullish(),
+    contractDate: z.iso.datetime().nullish(),
+    contractorAddress: z.string().nullish(),
+    contractorIsEntity: z.boolean(),
+    contractorName: z.string().nullish(),
+    contractorNationality: z.string().nullish(),
+    denominationCurrency: z.string().nullish(),
+    denominationType: z.string().nullish(),
+    entityJurisdiction: z.string().nullish(),
+    entityName: z.string().nullish(),
+    entityType: z.string().nullish(),
+    fteHours: z.string().nullish(),
+    id: z.string(),
+    role: z.string().nullish(),
+    services: z.string().nullish(),
+    sowNumber: z.string().nullish(),
+    termType: ContributorTermTypeSchema,
+    terminationNoticePeriod: z.string().nullish(),
+    workEndDate: z.iso.datetime().nullish(),
+    workStartDate: z.iso.datetime().nullish(),
   });
 }
 
@@ -128,6 +168,35 @@ export function AssociationMemberSchema(): z.ZodObject<
   });
 }
 
+export function ContributorAgreementSchema(): z.ZodObject<
+  Properties<ContributorAgreement>
+> {
+  return z.object({
+    __typename: z.literal("ContributorAgreement").optional(),
+    compensation: z.string().nullish(),
+    contractDate: z.iso.datetime().nullish(),
+    contractorAddress: z.string().nullish(),
+    contractorIsEntity: z.boolean(),
+    contractorName: z.string().nullish(),
+    contractorNationality: z.string().nullish(),
+    denominationCurrency: z.string().nullish(),
+    denominationType: z.string().nullish(),
+    entityJurisdiction: z.string().nullish(),
+    entityName: z.string().nullish(),
+    entityType: z.string().nullish(),
+    fteHours: z.string().nullish(),
+    generatedDocument: z.lazy(() => GeneratedStage2DocumentSchema().nullish()),
+    id: z.string(),
+    role: z.string().nullish(),
+    services: z.string().nullish(),
+    sowNumber: z.string().nullish(),
+    termType: ContributorTermTypeSchema,
+    terminationNoticePeriod: z.string().nullish(),
+    workEndDate: z.iso.datetime().nullish(),
+    workStartDate: z.iso.datetime().nullish(),
+  });
+}
+
 export function CopyFoundingMembersToBoardInputSchema(): z.ZodObject<
   Properties<CopyFoundingMembersToBoardInput>
 > {
@@ -156,6 +225,15 @@ export function GeneratedStage2DocumentSchema(): z.ZodObject<
     isSigned: z.boolean().nullish(),
     markdown: z.string().nullish(),
     signedAt: z.iso.datetime().nullish(),
+  });
+}
+
+export function MarkContributorAgreementSignedInputSchema(): z.ZodObject<
+  Properties<MarkContributorAgreementSignedInput>
+> {
+  return z.object({
+    id: z.string(),
+    signedAt: z.iso.datetime(),
   });
 }
 
@@ -206,6 +284,14 @@ export function RemoveBoardMemberInputSchema(): z.ZodObject<
   });
 }
 
+export function RemoveContributorAgreementInputSchema(): z.ZodObject<
+  Properties<RemoveContributorAgreementInput>
+> {
+  return z.object({
+    id: z.string(),
+  });
+}
+
 export function RemoveMemberInputSchema(): z.ZodObject<
   Properties<RemoveMemberInput>
 > {
@@ -230,6 +316,15 @@ export function SetAssociationSeatInputSchema(): z.ZodObject<
     registeredAddress: z.string().nullish(),
     seatCanton: z.string(),
     seatCity: z.string(),
+  });
+}
+
+export function SetContributorAgreementMarkdownInputSchema(): z.ZodObject<
+  Properties<SetContributorAgreementMarkdownInput>
+> {
+  return z.object({
+    id: z.string(),
+    markdown: z.string(),
   });
 }
 
@@ -329,6 +424,7 @@ export function SwissAssociationStateSchema(): z.ZodObject<
     boardMembers: z.array(z.lazy(() => AssociationMemberSchema())).nullish(),
     chairName: z.string().nullish(),
     chairRole: z.string().nullish(),
+    contributorAgreements: z.array(z.lazy(() => ContributorAgreementSchema())),
     counselName: z.string().nullish(),
     currentPhase: z.number().nullish(),
     customNotes: z.array(z.string()),
@@ -377,6 +473,33 @@ export function UpdateBoardMemberInputSchema(): z.ZodObject<
     representative: z.string().nullish(),
     residenceOrCity: z.string().nullish(),
     type: MemberTypeSchema.nullish(),
+  });
+}
+
+export function UpdateContributorAgreementInputSchema(): z.ZodObject<
+  Properties<UpdateContributorAgreementInput>
+> {
+  return z.object({
+    compensation: z.string().nullish(),
+    contractDate: z.iso.datetime().nullish(),
+    contractorAddress: z.string().nullish(),
+    contractorIsEntity: z.boolean().nullish(),
+    contractorName: z.string().nullish(),
+    contractorNationality: z.string().nullish(),
+    denominationCurrency: z.string().nullish(),
+    denominationType: z.string().nullish(),
+    entityJurisdiction: z.string().nullish(),
+    entityName: z.string().nullish(),
+    entityType: z.string().nullish(),
+    fteHours: z.string().nullish(),
+    id: z.string(),
+    role: z.string().nullish(),
+    services: z.string().nullish(),
+    sowNumber: z.string().nullish(),
+    termType: ContributorTermTypeSchema.nullish(),
+    terminationNoticePeriod: z.string().nullish(),
+    workEndDate: z.iso.datetime().nullish(),
+    workStartDate: z.iso.datetime().nullish(),
   });
 }
 

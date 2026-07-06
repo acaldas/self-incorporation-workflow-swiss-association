@@ -5,6 +5,7 @@
 export * from "./actions.js";
 export * from "./association/operations.js";
 export * from "./board/operations.js";
+export * from "./contributors/operations.js";
 export * from "./controller.js";
 export * from "./creators.js";
 export * from "./dissolution/operations.js";

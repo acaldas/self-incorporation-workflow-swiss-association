@@ -79,6 +79,7 @@ export function defaultGlobalState(): SwissAssociationGlobalState {
     belowRecommendedMemberCount: null,
     registeredAddressConfirmed: null,
     customNotes: [],
+    contributorAgreements: [],
   };
 }
 

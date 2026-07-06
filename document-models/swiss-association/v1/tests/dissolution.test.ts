@@ -1,6 +1,9 @@
+import { generateMock } from "document-model";
 import {
+  isSwissAssociationDocument,
   reducer,
   setDissolutionDetails,
+  SetDissolutionDetailsInputSchema,
   utils,
 } from "document-models/swiss-association/v1";
 import { describe, expect, it } from "vitest";
@@ -46,5 +49,22 @@ describe("DissolutionOperations", () => {
     expect(second.state.global.dissolution?.dissolutionDate).toBe(
       "2026-07-01T00:00:00.000Z",
     );
+  });
+
+  it("should handle setDissolutionDetails operation", () => {
+    const document = utils.createDocument();
+    const input = generateMock(SetDissolutionDetailsInputSchema());
+
+    const updatedDocument = reducer(document, setDissolutionDetails(input));
+
+    expect(isSwissAssociationDocument(updatedDocument)).toBe(true);
+    expect(updatedDocument.operations.global).toHaveLength(1);
+    expect(updatedDocument.operations.global[0].action.type).toBe(
+      "SET_DISSOLUTION_DETAILS",
+    );
+    expect(updatedDocument.operations.global[0].action.input).toStrictEqual(
+      input,
+    );
+    expect(updatedDocument.operations.global[0].index).toEqual(0);
   });
 });
