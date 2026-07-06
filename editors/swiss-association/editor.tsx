@@ -26,14 +26,6 @@ export default function Editor() {
   const [document, dispatch] = useSelectedSwissAssociationDocument();
   const [currentStep, setCurrentStep] = useState(0);
 
-  if (!document || !dispatch) {
-    return (
-      <div style={{ padding: "1rem", color: "#475569", fontSize: "0.875rem" }}>
-        Select a SwissAssociation document to open this editor.
-      </div>
-    );
-  }
-
   const state = document.state.global;
   const safeDispatch = dispatch;
 
@@ -47,7 +39,7 @@ export default function Editor() {
       state.registeredAddress &&
       state.purposeEn
     ),
-    membersDone: (state.members?.length ?? 0) >= 2,
+    membersDone: state.members.length >= 2,
     boardDone: (state.boardMembers?.length ?? 0) >= 1,
     aoaSigned: state.aoaDocument?.isSigned === true,
     regGaSigned: state.regGaDocument?.isSigned === true,
@@ -56,7 +48,7 @@ export default function Editor() {
     multisigConfigured: !!state.multisig,
     mpaSigned: state.mpaDocument?.isSigned === true,
     dissolutionDetailsDone: !!(
-      state.dissolution?.dissolutionDate && state.dissolution?.assetRecipient
+      state.dissolution?.dissolutionDate && state.dissolution.assetRecipient
     ),
     dissolutionSigned: state.dissolutionResolutionDocument?.isSigned === true,
     hasMultisig: !!state.multisig,

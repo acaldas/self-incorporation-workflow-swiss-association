@@ -128,7 +128,7 @@ export function Stage2DocumentStep({
         <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
           <p className="text-sm font-medium text-green-800">
             Signed and locked at{" "}
-            {new Date(documentState?.signedAt || "").toLocaleString()}
+            {new Date(documentState.signedAt || "").toLocaleString()}
           </p>
           {lockedHint && (
             <p className="text-xs text-green-700 mt-1">{lockedHint}</p>

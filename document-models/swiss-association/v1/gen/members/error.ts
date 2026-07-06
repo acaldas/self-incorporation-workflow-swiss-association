@@ -13,5 +13,6 @@ export class MemberNotFoundError extends Error implements ReducerError {
 
 export const errors = {
   UpdateMember: { MemberNotFoundError },
+
   RemoveMember: { MemberNotFoundError },
 };

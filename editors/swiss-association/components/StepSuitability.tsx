@@ -3,6 +3,7 @@ import { SectionCard } from "./SectionCard.js";
 import { FormField } from "./FormField.js";
 import { assessPurpose } from "./assessPurposeClient.js";
 import type { PurposeAssessment } from "./assessPurposeClient.js";
+import { useSubgraphEndpoint } from "./useSubgraphEndpoint.js";
 
 interface Props {
   onContinue: () => void;
@@ -152,12 +153,13 @@ export function StepSuitability({ onContinue, onBack }: Props) {
   const [purpose, setPurpose] = useState("");
   const [assessment, setAssessment] = useState<PurposeAssessment | null>(null);
   const [assessing, setAssessing] = useState(false);
+  const subgraphEndpoint = useSubgraphEndpoint();
 
   async function handleAssess() {
     if (!purpose.trim() || assessing) return;
     setAssessing(true);
     setAssessment(null);
-    const outcome = await assessPurpose(purpose.trim());
+    const outcome = await assessPurpose(purpose.trim(), subgraphEndpoint);
     setAssessment(outcome);
     setAssessing(false);
   }

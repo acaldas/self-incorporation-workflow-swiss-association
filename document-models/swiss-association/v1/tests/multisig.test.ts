@@ -11,7 +11,9 @@ import { describe, expect, it } from "vitest";
 describe("MultisigOperations", () => {
   it("should handle setMultisigConfig operation", () => {
     const document = utils.createDocument();
-    const input = generateMock(SetMultisigConfigInputSchema());
+    const input = generateMock(SetMultisigConfigInputSchema(), {
+      multisigDate: "2024-01-01T00:00:00.000Z",
+    });
 
     const updatedDocument = reducer(document, setMultisigConfig(input));
 

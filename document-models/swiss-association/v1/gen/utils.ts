@@ -2,13 +2,14 @@
  * WARNING: DO NOT EDIT
  * This file is auto-generated and updated by codegen
  */
-import type { DocumentModelUtils } from "document-model";
+import type { DocumentModelUtils, PHBaseState, Reducer } from "document-model";
 import {
   baseCreateDocument,
-  baseLoadFromInput,
+  baseLoadFromInputVersioned,
   baseSaveToFileHandle,
-  defaultBaseState,
+  createBaseState,
 } from "document-model";
+import { swissAssociationUpgradeManifest } from "../../upgrades/upgrade-manifest.js";
 import {
   assertIsSwissAssociationDocument,
   assertIsSwissAssociationState,
@@ -96,7 +97,7 @@ export const utils: DocumentModelUtils<SwissAssociationPHState> = {
   fileExtension: "phsa",
   createState(state) {
     return {
-      ...defaultBaseState(),
+      ...createBaseState(state?.auth, { version: 1, ...state?.document }),
       global: { ...initialGlobalState, ...state?.global },
       local: { ...initialLocalState, ...state?.local },
     };
@@ -112,7 +113,10 @@ export const utils: DocumentModelUtils<SwissAssociationPHState> = {
     return baseSaveToFileHandle(document, input);
   },
   loadFromInput(input) {
-    return baseLoadFromInput(input, reducer);
+    return baseLoadFromInputVersioned(input, {
+      reducers: { 1: reducer as unknown as Reducer<PHBaseState> },
+      upgradeManifest: swissAssociationUpgradeManifest,
+    });
   },
   isStateOfType(state) {
     return isSwissAssociationState(state);

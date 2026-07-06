@@ -29,5 +29,12 @@
       "name": "purpose-assessment"
     }
   ],
-  "config": []
+  "config": [
+    {
+      "name": "ANTHROPIC_API_KEY",
+      "type": "secret",
+      "description": "API key for the purpose-assessment subgraph's Anthropic call. Optional — the check degrades to a 'consult counsel' fallback when absent.",
+      "required": false
+    }
+  ]
 }

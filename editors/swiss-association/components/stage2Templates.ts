@@ -2,12 +2,14 @@ import type {
   ContributorAgreement,
   SwissAssociationState,
 } from "document-models/swiss-association";
-import aoaTemplateRaw from "../../../oh legal  templates.md/_[TEMPLATE] default AoA OH _ standard  - .docx.md?raw";
-import foundingMinutesTemplateRaw from "../../../oh legal  templates.md/[TEMPLATE] OH Founding Meeting Minutes.md?raw";
-import contributorAgreementTemplateRaw from "../../../oh legal  templates.md/[TEMPLATE] Contributor Agreement.md?raw";
-import mpaV2TemplateRaw from "../../../OH legal incorporation templates copy.md/[TEMPLATE]  MPA v2.docx.md?raw";
-import regulationGATemplateRaw from "../../../OH legal incorporation templates copy.md/[TEMPLATE] OH  Regs General Assembly.md?raw";
-import dissolutionResolutionTemplateRaw from "../../../OH legal incorporation templates copy.md/[TEMPLATE] OH Dissolution Resolution.md?raw";
+import {
+  aoaTemplateRaw,
+  contributorAgreementTemplateRaw,
+  dissolutionResolutionTemplateRaw,
+  foundingMinutesTemplateRaw,
+  mpaV2TemplateRaw,
+  regulationGATemplateRaw,
+} from "./stage2Templates.generated.js";
 
 function formatList(items: string[]) {
   if (items.length === 0) return "- (to be completed)";
@@ -93,7 +95,7 @@ ${unresolved.map((token) => `- ${token}`).join("\n")}
 }
 
 function toMemberLines(state: SwissAssociationState) {
-  return (state.members || []).map((member) =>
+  return state.members.map((member) =>
     formatMemberLine(
       member.name,
       member.nationalityOrCountry,
@@ -105,7 +107,7 @@ function toMemberLines(state: SwissAssociationState) {
 // Attendee line for the founding minutes: "Name/Entity + representative, City".
 // The representative is only shown for members that have one (e.g. legal entities).
 function toFoundingAttendeeLines(state: SwissAssociationState) {
-  return (state.members || []).map((member) => {
+  return state.members.map((member) => {
     const rep = member.representative ? ` + ${member.representative}` : "";
     return `${member.name}${rep}, ${member.residenceOrCity}`;
   });
@@ -184,7 +186,7 @@ ${blocks}
 // AOA_ENGLISH_ONLY to false to restore the full bilingual output — the German
 // content stays untouched in the template and the model (nameDe, purposeDe,
 // German template strings), it is only suppressed at render time.
-const AOA_ENGLISH_ONLY = true;
+const AOA_ENGLISH_ONLY: boolean = true;
 
 function toEnglishOnlyTable(markdown: string): string {
   return markdown
@@ -261,7 +263,7 @@ export function buildAoaMarkdown(state: SwissAssociationState) {
   // Append the shared signature section for board members.
   const signers = state.boardMembers?.length
     ? state.boardMembers
-    : state.members || [];
+    : state.members;
   template += buildSignatureSection(
     `The undersigned board members hereby adopt the Articles of Association of **${associationName}**, executed on **${date}** in **${city}**, Switzerland.`,
     signers.map((m) => ({
@@ -461,7 +463,7 @@ export function buildRegulationGAMarkdown(state: SwissAssociationState) {
 export function buildMpaMarkdown(state: SwissAssociationState) {
   const associationName = state.nameEn || state.nameDe || "Association";
   const multisig = state.multisig;
-  const activeSigner = state.boardMembers?.[0] || state.members?.[0];
+  const activeSigner = state.boardMembers?.at(0) ?? state.members.at(0);
   let template = applyReplacements(mpaV2TemplateRaw, [
     { token: "[Association Name]", value: associationName },
     {
@@ -513,7 +515,7 @@ export function buildMpaMarkdown(state: SwissAssociationState) {
   // Shared signature section for the active signers (the Association's board).
   const mpaSigners = state.boardMembers?.length
     ? state.boardMembers
-    : state.members || [];
+    : state.members;
   template += buildSignatureSection(
     `Executed by **${associationName}** and the Active Signers listed below.`,
     mpaSigners.map((m) => ({
@@ -573,7 +575,7 @@ export function buildDissolutionResolutionMarkdown(
   template = template.split("[Signatures]").join("");
   template += buildSignatureSection(
     `The undersigned members hereby resolve the dissolution of **${associationName}**, effective **${date}**.`,
-    (state.members || []).map((m) => ({ name: m.name, role: "Member" })),
+    state.members.map((m) => ({ name: m.name, role: "Member" })),
   );
 
   return appendPlaceholderReport(template, "Dissolution Resolution");

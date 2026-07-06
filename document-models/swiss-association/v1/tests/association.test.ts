@@ -53,7 +53,9 @@ describe("AssociationOperations", () => {
 
   it("should handle setFoundingDate operation", () => {
     const document = utils.createDocument();
-    const input = generateMock(SetFoundingDateInputSchema());
+    const input = generateMock(SetFoundingDateInputSchema(), {
+      foundingDate: "2024-01-01T00:00:00.000Z",
+    });
 
     const updatedDocument = reducer(document, setFoundingDate(input));
 

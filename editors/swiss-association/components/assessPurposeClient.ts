@@ -1,16 +1,5 @@
-/**
- * Browser-side client for the purpose-assessment subgraph.
- *
- * This ONLY issues a GraphQL request to the server-side subgraph — it never
- * imports the Anthropic SDK and never sees the API key (those live server-side
- * in subgraphs/purpose-assessment/lib.ts). Informational only, never blocking.
- *
- * Dev endpoint = the local Switchboard GraphQL, the same URL that works in the
- * playground. TODO(prod): derive this from the connected reactor/switchboard
- * URL instead of hardcoding.
- */
-const SWITCHBOARD_GRAPHQL_URL = "http://localhost:4001/graphql";
-
+// Browser client for the purpose-assessment subgraph (no SDK/API key here).
+// Endpoint is resolved from the document's remote drive; degrades gracefully.
 export interface PurposeAssessment {
   verdict: string;
   explanation: string;
@@ -27,9 +16,13 @@ const FALLBACK: PurposeAssessment = {
 const QUERY =
   "query Assess($text: String!) { assessPurpose(text: $text) { verdict explanation considerations } }";
 
-export async function assessPurpose(text: string): Promise<PurposeAssessment> {
+export async function assessPurpose(
+  text: string,
+  endpoint: string | undefined,
+): Promise<PurposeAssessment> {
+  if (!endpoint) return FALLBACK;
   try {
-    const res = await fetch(SWITCHBOARD_GRAPHQL_URL, {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ query: QUERY, variables: { text } }),
