@@ -13,6 +13,10 @@ export interface StageDef {
   steps: StageStep[];
 }
 
+// Stages are grouped to mirror the capability-flow diagram. Step NUMBERS are
+// deliberately preserved (no renumbering) even though the grouping moves step 6
+// (Multisig Setup) out of Incorporation and after step 7 — the visible numbers
+// may run out of order across stages, and that is expected.
 export const STAGES: StageDef[] = [
   {
     number: 1,
@@ -24,25 +28,36 @@ export const STAGES: StageDef[] = [
     ],
   },
   {
+    // Completing this stage = "Exists as a legal person" — a shell entity that
+    // stops here is COMPLETE. Step 6 (treasury) is intentionally NOT here.
     number: 2,
     name: "Incorporation",
     steps: [
       { number: 4, label: "Review & Sign AoA" },
       { number: 5, label: "Review & Sign Reg GA" },
-      { number: 6, label: "Treasury Governance" },
       { number: 7, label: "Founding Meeting & Minutes" },
     ],
   },
   {
+    // Capability "Can hold & move money" — defined by the multisig (step 6).
+    // The MPA (step 8) is additive/optional within the stage; it does not gate
+    // the capability.
     number: 3,
-    name: "Contract management",
+    name: "Treasury & Governance",
     steps: [
+      { number: 6, label: "Multisig Setup" },
       { number: 8, label: "Review & Sign MPA" },
-      { number: 9, label: "Contributor agreements" },
     ],
   },
   {
+    // Capability "Can contract people". The contributor agreement (step 9) is
+    // not built yet — the stage exists but its step is pending.
     number: 4,
+    name: "Supplier & Contributor Management",
+    steps: [{ number: 9, label: "Contributor agreements" }],
+  },
+  {
+    number: 5,
     name: "Dissolution",
     steps: [
       { number: 10, label: "Dissolution Details" },
