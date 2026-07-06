@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { STAGES, DISSOLUTION_FIRST_STEP } from "./stages.js";
+import { STAGES, isStepLocked } from "./stages.js";
 import type { StageDef } from "./stages.js";
 
 // Four-state color system, shared by stage cards and step rows:
@@ -164,15 +164,15 @@ const DOT_COLOR: Record<Status, string> = {
 };
 
 // Resolve a single step row's status. `current` wins (you-are-here) over done.
+// Locking is per-branch (see stages.isStepLocked) — no single linear frontier.
 function getStepStatus(
   step: number,
   currentStep: number,
-  maxStep: number,
   progress: StageProgress,
 ): Status {
   if (step === currentStep) return "current";
   if (isStepDone(step, progress)) return "done";
-  if (step > maxStep && step < DISSOLUTION_FIRST_STEP) return "locked";
+  if (isStepLocked(step, progress)) return "locked";
   return "available";
 }
 
@@ -266,14 +266,12 @@ function StageCard({
   status,
   progress,
   currentStep,
-  maxStep,
   onStepClick,
 }: {
   stage: StageDef;
   status: Status;
   progress: StageProgress;
   currentStep: number;
-  maxStep: number;
   onStepClick: (step: number) => void;
 }) {
   const completedCount = stage.steps.filter((s) =>
@@ -327,7 +325,7 @@ function StageCard({
             key={step.number}
             number={step.number}
             label={step.label}
-            status={getStepStatus(step.number, currentStep, maxStep, progress)}
+            status={getStepStatus(step.number, currentStep, progress)}
             onClick={() => onStepClick(step.number)}
           />
         ))}
@@ -344,14 +342,12 @@ function StageCard({
 interface ProgressSidebarProps {
   progress: StageProgress;
   currentStep: number;
-  maxStep: number;
   onStepClick: (step: number) => void;
 }
 
 export function ProgressSidebar({
   progress,
   currentStep,
-  maxStep,
   onStepClick,
 }: ProgressSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -375,6 +371,13 @@ export function ProgressSidebar({
   function getStageStatus(stage: StageDef, index: number): Status {
     if (stageAllDone(stage, progress)) return "done";
     if (stage.steps.some((s) => s.number === currentStep)) return "current";
+    // Optional capability branches (Treasury, Supplier & Contributor,
+    // Dissolution) hang off the constituted entity in parallel — they open
+    // together once M1 is reached and never gate one another.
+    if (stage.optional) {
+      return progress.minutesSigned ? "available" : "locked";
+    }
+    // Required stages (Pre-Incorporation → Incorporation) stay sequential.
     const prevAllDone =
       index === 0 || stageAllDone(STAGES[index - 1], progress);
     return prevAllDone ? "available" : "locked";
@@ -452,7 +455,6 @@ export function ProgressSidebar({
             status={getStageStatus(stage, i)}
             progress={progress}
             currentStep={currentStep}
-            maxStep={maxStep}
             onStepClick={onStepClick}
           />
         ))}

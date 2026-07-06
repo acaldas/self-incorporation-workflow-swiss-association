@@ -68,6 +68,29 @@ export type AddBoardMemberInput = {
   type: MemberType;
 };
 
+export type AddContributorAgreementInput = {
+  compensation?: InputMaybe<Scalars["String"]["input"]>;
+  contractDate?: InputMaybe<Scalars["Date"]["input"]>;
+  contractorAddress?: InputMaybe<Scalars["String"]["input"]>;
+  contractorIsEntity: Scalars["Boolean"]["input"];
+  contractorName?: InputMaybe<Scalars["String"]["input"]>;
+  contractorNationality?: InputMaybe<Scalars["String"]["input"]>;
+  denominationCurrency?: InputMaybe<Scalars["String"]["input"]>;
+  denominationType?: InputMaybe<Scalars["String"]["input"]>;
+  entityJurisdiction?: InputMaybe<Scalars["String"]["input"]>;
+  entityName?: InputMaybe<Scalars["String"]["input"]>;
+  entityType?: InputMaybe<Scalars["String"]["input"]>;
+  fteHours?: InputMaybe<Scalars["String"]["input"]>;
+  id: Scalars["OID"]["input"];
+  role?: InputMaybe<Scalars["String"]["input"]>;
+  services?: InputMaybe<Scalars["String"]["input"]>;
+  sowNumber?: InputMaybe<Scalars["String"]["input"]>;
+  termType: ContributorTermType;
+  terminationNoticePeriod?: InputMaybe<Scalars["String"]["input"]>;
+  workEndDate?: InputMaybe<Scalars["Date"]["input"]>;
+  workStartDate?: InputMaybe<Scalars["Date"]["input"]>;
+};
+
 export type AddMemberInput = {
   id: Scalars["OID"]["input"];
   name: Scalars["String"]["input"];
@@ -94,6 +117,32 @@ export type AssociationMember = {
   type: MemberType;
 };
 
+export type ContributorAgreement = {
+  compensation: Maybe<Scalars["String"]["output"]>;
+  contractDate: Maybe<Scalars["Date"]["output"]>;
+  contractorAddress: Maybe<Scalars["String"]["output"]>;
+  contractorIsEntity: Scalars["Boolean"]["output"];
+  contractorName: Maybe<Scalars["String"]["output"]>;
+  contractorNationality: Maybe<Scalars["String"]["output"]>;
+  denominationCurrency: Maybe<Scalars["String"]["output"]>;
+  denominationType: Maybe<Scalars["String"]["output"]>;
+  entityJurisdiction: Maybe<Scalars["String"]["output"]>;
+  entityName: Maybe<Scalars["String"]["output"]>;
+  entityType: Maybe<Scalars["String"]["output"]>;
+  fteHours: Maybe<Scalars["String"]["output"]>;
+  generatedDocument: Maybe<GeneratedStage2Document>;
+  id: Scalars["OID"]["output"];
+  role: Maybe<Scalars["String"]["output"]>;
+  services: Maybe<Scalars["String"]["output"]>;
+  sowNumber: Maybe<Scalars["String"]["output"]>;
+  termType: ContributorTermType;
+  terminationNoticePeriod: Maybe<Scalars["String"]["output"]>;
+  workEndDate: Maybe<Scalars["Date"]["output"]>;
+  workStartDate: Maybe<Scalars["Date"]["output"]>;
+};
+
+export type ContributorTermType = "FIXED_DATE" | "NOTICE" | "ON_SOW_COMPLETION";
+
 export type CopyFoundingMembersToBoardInput = {
   confirm: Scalars["Boolean"]["input"];
 };
@@ -113,6 +162,11 @@ export type GeneratedStage2Document = {
   isSigned: Maybe<Scalars["Boolean"]["output"]>;
   markdown: Maybe<Scalars["String"]["output"]>;
   signedAt: Maybe<Scalars["DateTime"]["output"]>;
+};
+
+export type MarkContributorAgreementSignedInput = {
+  id: Scalars["OID"]["input"];
+  signedAt: Scalars["DateTime"]["input"];
 };
 
 export type MarkStage2DocumentSignedInput = {
@@ -156,6 +210,10 @@ export type RemoveBoardMemberInput = {
   id: Scalars["OID"]["input"];
 };
 
+export type RemoveContributorAgreementInput = {
+  id: Scalars["OID"]["input"];
+};
+
 export type RemoveMemberInput = {
   id: Scalars["OID"]["input"];
 };
@@ -169,6 +227,11 @@ export type SetAssociationSeatInput = {
   registeredAddress?: InputMaybe<Scalars["String"]["input"]>;
   seatCanton: Scalars["String"]["input"];
   seatCity: Scalars["String"]["input"];
+};
+
+export type SetContributorAgreementMarkdownInput = {
+  id: Scalars["OID"]["input"];
+  markdown: Scalars["String"]["input"];
 };
 
 export type SetDissolutionDetailsInput = {
@@ -238,6 +301,7 @@ export type SwissAssociationState = {
   boardMembers: Maybe<Array<AssociationMember>>;
   chairName: Maybe<Scalars["String"]["output"]>;
   chairRole: Maybe<Scalars["String"]["output"]>;
+  contributorAgreements: Array<ContributorAgreement>;
   counselName: Maybe<Scalars["String"]["output"]>;
   currentPhase: Maybe<Scalars["Int"]["output"]>;
   customNotes: Array<Scalars["String"]["output"]>;
@@ -278,6 +342,29 @@ export type UpdateBoardMemberInput = {
   representative?: InputMaybe<Scalars["String"]["input"]>;
   residenceOrCity?: InputMaybe<Scalars["String"]["input"]>;
   type?: InputMaybe<MemberType>;
+};
+
+export type UpdateContributorAgreementInput = {
+  compensation?: InputMaybe<Scalars["String"]["input"]>;
+  contractDate?: InputMaybe<Scalars["Date"]["input"]>;
+  contractorAddress?: InputMaybe<Scalars["String"]["input"]>;
+  contractorIsEntity?: InputMaybe<Scalars["Boolean"]["input"]>;
+  contractorName?: InputMaybe<Scalars["String"]["input"]>;
+  contractorNationality?: InputMaybe<Scalars["String"]["input"]>;
+  denominationCurrency?: InputMaybe<Scalars["String"]["input"]>;
+  denominationType?: InputMaybe<Scalars["String"]["input"]>;
+  entityJurisdiction?: InputMaybe<Scalars["String"]["input"]>;
+  entityName?: InputMaybe<Scalars["String"]["input"]>;
+  entityType?: InputMaybe<Scalars["String"]["input"]>;
+  fteHours?: InputMaybe<Scalars["String"]["input"]>;
+  id: Scalars["OID"]["input"];
+  role?: InputMaybe<Scalars["String"]["input"]>;
+  services?: InputMaybe<Scalars["String"]["input"]>;
+  sowNumber?: InputMaybe<Scalars["String"]["input"]>;
+  termType?: InputMaybe<ContributorTermType>;
+  terminationNoticePeriod?: InputMaybe<Scalars["String"]["input"]>;
+  workEndDate?: InputMaybe<Scalars["Date"]["input"]>;
+  workStartDate?: InputMaybe<Scalars["Date"]["input"]>;
 };
 
 export type UpdateMemberInput = {

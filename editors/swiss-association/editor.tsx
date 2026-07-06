@@ -20,6 +20,7 @@ import { StepRegulationGA } from "./components/StepRegulationGA.js";
 import { StepDissolutionDetails } from "./components/StepDissolutionDetails.js";
 import { StepDissolutionResolution } from "./components/StepDissolutionResolution.js";
 import type { StageProgress } from "./components/ProgressSidebar.js";
+import { isStepLocked } from "./components/stages.js";
 
 export default function Editor() {
   const [document, dispatch] = useSelectedSwissAssociationDocument();
@@ -35,19 +36,7 @@ export default function Editor() {
 
   const state = document.state.global;
   const safeDispatch = dispatch;
-  const phaseAComplete =
-    state.aoaDocument?.isSigned === true &&
-    state.foundingMinutesDocument?.isSigned === true;
-  const mpaSigned = state.mpaDocument?.isSigned === true;
 
-  const maxStep = !state.stage2Started
-    ? 7
-    : phaseAComplete
-      ? mpaSigned
-        ? 9
-        : 8
-      : 7;
-  const DISSOLUTION_FIRST_STEP = 10;
   // Optional Suitability side-screen, reachable from Welcome (not a numbered step).
   const SUITABILITY_STEP = -1;
 
@@ -73,14 +62,15 @@ export default function Editor() {
     hasMultisig: !!state.multisig,
   };
 
-  // All steps are navigable; future/locked steps render as read-only previews.
+  // All steps are navigable; genuinely-locked steps render as read-only
+  // previews. Gating is per-branch (see isStepLocked): the required founding
+  // chain is ordered, while the optional Treasury / Supplier & Contributor
+  // branches open together once the entity is constituted (M1).
   function handleStepClick(step: number) {
     setCurrentStep(step);
   }
 
-  // Welcome (step 0) and dissolution steps are never locked.
-  const isCurrentStepLocked =
-    currentStep > maxStep && currentStep < DISSOLUTION_FIRST_STEP;
+  const isCurrentStepLocked = isStepLocked(currentStep, stageProgress);
 
   function renderStep() {
     switch (currentStep) {
@@ -178,7 +168,13 @@ export default function Editor() {
           />
         );
       case 9:
-        return <StepContributorAgreements onBack={() => setCurrentStep(8)} />;
+        return (
+          <StepContributorAgreements
+            state={state}
+            dispatch={safeDispatch}
+            onBack={() => setCurrentStep(8)}
+          />
+        );
       case 10:
         return (
           <StepDissolutionDetails
@@ -274,7 +270,6 @@ export default function Editor() {
       <WizardLayout
         currentStep={currentStep}
         onStepClick={handleStepClick}
-        maxStep={maxStep}
         stageProgress={stageProgress}
       >
         {isCurrentStepLocked ? (

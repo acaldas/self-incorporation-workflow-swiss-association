@@ -88,6 +88,7 @@ export const initialGlobalState: SwissAssociationGlobalState = {
   belowRecommendedMemberCount: null,
   registeredAddressConfirmed: null,
   customNotes: [],
+  contributorAgreements: [],
 };
 export const initialLocalState: SwissAssociationLocalState = {};
 

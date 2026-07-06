@@ -6,6 +6,7 @@ import { baseActions } from "document-model";
 import {
   swissAssociationAssociationActions,
   swissAssociationBoardActions,
+  swissAssociationContributorsActions,
   swissAssociationDissolutionActions,
   swissAssociationDocumentsActions,
   swissAssociationMembersActions,
@@ -24,4 +25,5 @@ export const actions = {
   ...swissAssociationDocumentsActions,
   ...swissAssociationWorkflowActions,
   ...swissAssociationDissolutionActions,
+  ...swissAssociationContributorsActions,
 };
