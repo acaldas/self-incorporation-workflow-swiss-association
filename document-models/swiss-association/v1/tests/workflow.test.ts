@@ -15,7 +15,9 @@ import { describe, expect, it } from "vitest";
 describe("WorkflowOperations", () => {
   it("should handle updatePhaseStatus operation", () => {
     const document = utils.createDocument();
-    const input = generateMock(UpdatePhaseStatusInputSchema());
+    const input = generateMock(UpdatePhaseStatusInputSchema(), {
+      completedDate: "2024-01-01T00:00:00.000Z",
+    });
 
     const updatedDocument = reducer(document, updatePhaseStatus(input));
 
@@ -32,7 +34,9 @@ describe("WorkflowOperations", () => {
 
   it("should handle advancePhase operation", () => {
     const document = utils.createDocument();
-    const input = generateMock(AdvancePhaseInputSchema());
+    const input = generateMock(AdvancePhaseInputSchema(), {
+      completedDate: "2024-01-01T00:00:00.000Z",
+    });
 
     const updatedDocument = reducer(document, advancePhase(input));
 

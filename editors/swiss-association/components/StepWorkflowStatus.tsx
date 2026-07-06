@@ -270,7 +270,7 @@ export function StepWorkflowStatus({
     state.registeredAddress &&
     state.purposeEn
   );
-  const membersDone = (state.members?.length ?? 0) >= 2;
+  const membersDone = state.members.length >= 2;
   const boardDone = (state.boardMembers?.length ?? 0) >= 1;
   const aoaSigned = state.aoaDocument?.isSigned === true;
   const minutesSigned = state.foundingMinutesDocument?.isSigned === true;

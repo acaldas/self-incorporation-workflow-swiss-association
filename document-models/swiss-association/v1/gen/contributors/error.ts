@@ -28,8 +28,12 @@ export class ContributorAgreementNotFoundError
 
 export const errors = {
   AddContributorAgreement: { DuplicateContributorAgreementError },
+
   UpdateContributorAgreement: { ContributorAgreementNotFoundError },
+
   RemoveContributorAgreement: { ContributorAgreementNotFoundError },
+
   SetContributorAgreementMarkdown: { ContributorAgreementNotFoundError },
+
   MarkContributorAgreementSigned: { ContributorAgreementNotFoundError },
 };

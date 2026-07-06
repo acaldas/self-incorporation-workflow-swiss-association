@@ -31,13 +31,13 @@ export function StepDissolutionDetails({
   onNext,
 }: Props) {
   const d = state.dissolution;
-  const defaultExecuting = (state.members || []).map((m) => m.name).join(", ");
+  const defaultExecuting = state.members.map((m) => m.name).join(", ");
 
   const [dissolutionDate, setDissolutionDate] = useState(
     d?.dissolutionDate ? d.dissolutionDate.slice(0, 10) : "",
   );
   const [resolutionForm, setResolutionForm] = useState<FormValue>(
-    (d?.resolutionForm as FormValue) ?? "WRITTEN",
+    (d?.resolutionForm ?? "WRITTEN") as FormValue,
   );
   const [assetRecipient, setAssetRecipient] = useState(d?.assetRecipient ?? "");
   const [executingPersons, setExecutingPersons] = useState(

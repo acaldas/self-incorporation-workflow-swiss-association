@@ -22,7 +22,7 @@ interface Props {
 
 export function StepAssociationDetails({ state, dispatch, onNext }: Props) {
   const [nameEn, setNameEn] = useState(state.nameEn ?? "");
-  const [nameDe, setNameDe] = useState(state.nameDe ?? "");
+  const nameDe = state.nameDe ?? "";
   const [seatCity, setSeatCity] = useState(state.seatCity ?? "Zug");
   const [seatCanton, setSeatCanton] = useState(
     state.seatCanton ?? "Canton Zug",
@@ -40,7 +40,7 @@ export function StepAssociationDetails({ state, dispatch, onNext }: Props) {
     state.primaryLanguage ?? "EN",
   );
   const [purposeEn, setPurposeEn] = useState(state.purposeEn ?? "");
-  const [purposeDe, setPurposeDe] = useState(state.purposeDe ?? "");
+  const purposeDe = state.purposeDe ?? "";
 
   function handleSave() {
     if (nameEn)

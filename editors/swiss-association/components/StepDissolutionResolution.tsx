@@ -12,7 +12,7 @@ interface Props {
 
 export function StepDissolutionResolution({ state, dispatch, onBack }: Props) {
   const detailsDone = !!(
-    state.dissolution?.dissolutionDate && state.dissolution?.assetRecipient
+    state.dissolution?.dissolutionDate && state.dissolution.assetRecipient
   );
   const alreadySigned = state.dissolutionResolutionDocument?.isSigned === true;
 

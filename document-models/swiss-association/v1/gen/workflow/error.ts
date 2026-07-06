@@ -13,5 +13,6 @@ export class PhaseNotFoundError extends Error implements ReducerError {
 
 export const errors = {
   UpdatePhaseStatus: { PhaseNotFoundError },
+
   AdvancePhase: { PhaseNotFoundError },
 };
