@@ -16,7 +16,9 @@ import { SectionCard } from "./SectionCard.js";
 interface Stage2DocumentStepProps {
   title: string;
   description: string;
-  documentType: Stage2DocumentType;
+  // Singleton documents identify themselves by type; collection items (e.g.
+  // contributor agreements) instead inject `persistMarkdown` / `markSigned`.
+  documentType?: Stage2DocumentType;
   dispatch: DocumentDispatch<SwissAssociationAction>;
   documentState: GeneratedStage2Document | null | undefined;
   generateMarkdown: () => string;
@@ -25,6 +27,10 @@ interface Stage2DocumentStepProps {
   nextLabel?: string;
   lockedHint?: string;
   nextRequiresSigned?: boolean;
+  // Optional overrides for persistence — when provided they take precedence
+  // over the documentType-based dispatch (used by collection items keyed by id).
+  persistMarkdown?: (markdown: string) => void;
+  markSigned?: (signedAt: string) => void;
 }
 
 function escapeHtml(text: string) {
@@ -233,7 +239,25 @@ export function Stage2DocumentStep({
   nextLabel = "Continue →",
   lockedHint,
   nextRequiresSigned = false,
+  persistMarkdown,
+  markSigned,
 }: Stage2DocumentStepProps) {
+  // Persist/sign via the injected callbacks when present, otherwise fall back to
+  // the singleton documentType-based dispatch.
+  function persist(markdown: string) {
+    if (persistMarkdown) {
+      persistMarkdown(markdown);
+    } else if (documentType) {
+      dispatch(setStage2DocumentMarkdown({ documentType, markdown }));
+    }
+  }
+  function sign(signedAt: string) {
+    if (markSigned) {
+      markSigned(signedAt);
+    } else if (documentType) {
+      dispatch(markStage2DocumentSigned({ documentType, signedAt }));
+    }
+  }
   const [generationMessage, setGenerationMessage] = useState<string | null>(
     null,
   );
@@ -262,12 +286,7 @@ export function Stage2DocumentStep({
         return;
       }
 
-      dispatch(
-        setStage2DocumentMarkdown({
-          documentType,
-          markdown: nextMarkdown,
-        }),
-      );
+      persist(nextMarkdown);
       setGenerationMessage(
         `Draft refreshed at ${new Date().toLocaleTimeString()}.`,
       );
@@ -283,19 +302,9 @@ export function Stage2DocumentStep({
     const markdownToPersist = previewMarkdown ?? generateMarkdown();
 
     if (!documentState?.markdown || previewMarkdown) {
-      dispatch(
-        setStage2DocumentMarkdown({
-          documentType,
-          markdown: markdownToPersist,
-        }),
-      );
+      persist(markdownToPersist);
     }
-    dispatch(
-      markStage2DocumentSigned({
-        documentType,
-        signedAt: new Date().toISOString(),
-      }),
-    );
+    sign(new Date().toISOString());
   }
 
   return (

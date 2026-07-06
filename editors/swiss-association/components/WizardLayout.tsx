@@ -6,7 +6,6 @@ import { CapabilityFlow } from "./CapabilityFlow.js";
 interface WizardLayoutProps {
   currentStep: number;
   onStepClick: (step: number) => void;
-  maxStep: number;
   children: ReactNode;
   stageProgress?: StageProgress;
 }
@@ -14,7 +13,6 @@ interface WizardLayoutProps {
 export function WizardLayout({
   currentStep,
   onStepClick,
-  maxStep,
   children,
   stageProgress,
 }: WizardLayoutProps) {
@@ -57,7 +55,6 @@ export function WizardLayout({
           <ProgressSidebar
             progress={stageProgress}
             currentStep={currentStep}
-            maxStep={maxStep}
             onStepClick={onStepClick}
           />
         )}

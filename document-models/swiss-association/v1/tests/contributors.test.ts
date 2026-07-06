@@ -113,4 +113,29 @@ describe("ContributorsOperations", () => {
     );
     expect(updatedDocument.operations.global[0].index).toEqual(0);
   });
+
+  it("should not crash when a legacy document has no contributorAgreements array", () => {
+    const document = utils.createDocument();
+    // Simulate a document instance created before this collection field existed:
+    // its runtime state has no value for it, despite the non-null schema type.
+    delete (document.state.global as { contributorAgreements?: unknown })
+      .contributorAgreements;
+
+    const updatedDocument = reducer(
+      document,
+      addContributorAgreement({
+        id: "contrib-legacy-1",
+        contractorIsEntity: false,
+        termType: "FIXED_DATE",
+      }),
+    );
+
+    // The guard coerces to [] first, so the op records cleanly (no error) and
+    // the agreement lands.
+    expect(updatedDocument.operations.global[0].error).toBeUndefined();
+    expect(updatedDocument.state.global.contributorAgreements).toHaveLength(1);
+    expect(updatedDocument.state.global.contributorAgreements[0].id).toBe(
+      "contrib-legacy-1",
+    );
+  });
 });

@@ -11,6 +11,11 @@ export interface StageDef {
   number: number;
   name: string;
   steps: StageStep[];
+  // Optional capability branches (Treasury, Supplier & Contributor,
+  // Dissolution) hang off the constituted entity in parallel. They do NOT gate
+  // one another and only open once Milestone M1 (the entity legally exists) is
+  // reached. Required stages (Pre-Incorporation, Incorporation) stay sequential.
+  optional?: boolean;
 }
 
 // Stages are grouped to mirror the capability-flow diagram. Step NUMBERS are
@@ -44,21 +49,24 @@ export const STAGES: StageDef[] = [
     // the capability.
     number: 3,
     name: "Treasury & Governance",
+    optional: true,
     steps: [
       { number: 6, label: "Multisig Setup" },
       { number: 8, label: "Review & Sign MPA" },
     ],
   },
   {
-    // Capability "Can contract people". The contributor agreement (step 9) is
-    // not built yet — the stage exists but its step is pending.
+    // Capability "Can contract people" — reachable straight after founding,
+    // independently of Treasury.
     number: 4,
     name: "Supplier & Contributor Management",
+    optional: true,
     steps: [{ number: 9, label: "Contributor agreements" }],
   },
   {
     number: 5,
     name: "Dissolution",
+    optional: true,
     steps: [
       { number: 10, label: "Dissolution Details" },
       { number: 11, label: "Dissolution Resolution" },
@@ -66,5 +74,37 @@ export const STAGES: StageDef[] = [
   },
 ];
 
-// Dissolution steps are always reachable regardless of maxStep gating.
+// Dissolution steps are always reachable regardless of milestone gating.
 export const DISSOLUTION_FIRST_STEP = 10;
+
+// The three founding-document steps whose ORDER matters — the only required,
+// sequentially-gated chain. Everything else is either free data-entry
+// (steps 0–3), an optional parallel branch (6/8/9), or dissolution (10/11).
+export const REQUIRED_CHAIN_STEPS = [4, 5, 7] as const;
+const OPTIONAL_BRANCH_STEPS = new Set([6, 8, 9]);
+
+// The minimum signals needed to decide whether a step is a read-only preview.
+// `minutesSigned` is Milestone M1 — the association legally exists.
+export interface StepGate {
+  aoaSigned: boolean;
+  regGaSigned: boolean;
+  minutesSigned: boolean;
+}
+
+// Is `step` a genuinely-locked read-only preview (not yet reachable)?
+//
+// Gating is per-branch, NOT one linear chain:
+//   • Required founding chain, order matters: AoA (4) → Reg GA (5) →
+//     Founding Meeting (7). Each is a preview until its predecessors are signed.
+//   • Optional parallel branches (Treasury 6/8, Supplier & Contributor 9) open
+//     together once the entity is constituted (M1). No cross-branch gating — a
+//     user reaches the contributor agreement (9) after founding WITHOUT the
+//     multisig (6).
+//   • Welcome + data entry (0–3) and Dissolution (≥10) are always reachable.
+export function isStepLocked(step: number, g: StepGate): boolean {
+  if (step >= DISSOLUTION_FIRST_STEP) return false;
+  if (OPTIONAL_BRANCH_STEPS.has(step)) return !g.minutesSigned;
+  if (step === 5) return !g.aoaSigned;
+  if (step === 7) return !g.aoaSigned || !g.regGaSigned;
+  return false;
+}

@@ -1,6 +1,10 @@
-import type { SwissAssociationState } from "document-models/swiss-association";
+import type {
+  ContributorAgreement,
+  SwissAssociationState,
+} from "document-models/swiss-association";
 import aoaTemplateRaw from "../../../oh legal  templates.md/_[TEMPLATE] default AoA OH _ standard  - .docx.md?raw";
 import foundingMinutesTemplateRaw from "../../../oh legal  templates.md/[TEMPLATE] OH Founding Meeting Minutes.md?raw";
+import contributorAgreementTemplateRaw from "../../../oh legal  templates.md/[TEMPLATE] Contributor Agreement.md?raw";
 import mpaV2TemplateRaw from "../../../OH legal incorporation templates copy.md/[TEMPLATE]  MPA v2.docx.md?raw";
 import regulationGATemplateRaw from "../../../OH legal incorporation templates copy.md/[TEMPLATE] OH  Regs General Assembly.md?raw";
 import dissolutionResolutionTemplateRaw from "../../../OH legal incorporation templates copy.md/[TEMPLATE] OH Dissolution Resolution.md?raw";
@@ -618,4 +622,88 @@ export function buildDissolutionResolutionMarkdown(
   template = template.split("[Signatures]").join(sigBlock);
 
   return appendPlaceholderReport(template, "Dissolution Resolution");
+}
+
+// Keep the <!-- FAMILY:VALUE -->…<!-- /FAMILY:VALUE --> block whose VALUE
+// matches `keep`, and drop every other block in that family (markers included).
+// Used for both the entity/individual branches and the §4 term alternatives.
+function resolveMarkers(
+  template: string,
+  family: string,
+  keep: string,
+): string {
+  const re = new RegExp(
+    `<!--\\s*${family}:([A-Z_]+)\\s*-->([\\s\\S]*?)<!--\\s*/${family}:\\1\\s*-->`,
+    "g",
+  );
+  return template.replace(re, (_full, value: string, inner: string) =>
+    value === keep ? inner : "",
+  );
+}
+
+// Drop any instructional front-matter above the contract's title. The committed
+// template already opens at the heading; this is a defensive no-op otherwise.
+function stripBeforeContributorHeading(template: string): string {
+  const heading = "# INDEPENDENT CONTRACTOR AGREEMENT";
+  const idx = template.indexOf(heading);
+  return idx > 0 ? template.slice(idx) : template;
+}
+
+// Date scalars are stored as full ISO datetimes; show date-only in the document.
+function dateOnly(value: string | null | undefined): string | null {
+  return value ? value.slice(0, 10) : null;
+}
+
+export function buildContributorAgreementMarkdown(
+  agreement: ContributorAgreement,
+  state: SwissAssociationState,
+) {
+  // 1. Strip front-matter, then resolve the entity/individual branch and the
+  //    §4 term alternative down to the single selected clause.
+  let template = stripBeforeContributorHeading(contributorAgreementTemplateRaw);
+  template = resolveMarkers(
+    template,
+    "BRANCH",
+    agreement.contractorIsEntity ? "ENTITY" : "INDIVIDUAL",
+  );
+  template = resolveMarkers(template, "TERM", agreement.termType);
+
+  // 2. OH-side tokens are read from Step 1 state (never re-collected).
+  const associationName = state.nameEn || state.nameDe || "Association";
+  const replacements: ReplacementSpec[] = [
+    { token: "[Association Name]", value: associationName },
+    { token: "[Registered Address]", value: resolveAddress(state) },
+    { token: "[Canton]", value: state.seatCanton || "Zug" },
+  ];
+  const ohAgent = state.chairName || state.secretaryName;
+  if (ohAgent) replacements.push({ token: "[OH Agent]", value: ohAgent });
+
+  // 3. Contractor tokens come from the agreement. Only push a replacement when
+  //    the value is present, so unset tokens survive into the placeholder
+  //    report rather than resolving to an empty string.
+  const optional: [string, string | null | undefined][] = [
+    ["[Contractor Name]", agreement.contractorName],
+    ["[Contractor Nationality]", agreement.contractorNationality],
+    ["[Contractor Address]", agreement.contractorAddress],
+    ["[Contractor Entity Name]", agreement.entityName],
+    ["[Contractor Entity Type]", agreement.entityType],
+    ["[Contractor Entity Jurisdiction]", agreement.entityJurisdiction],
+    ["[Contractor Title]", agreement.role],
+    ["[Contract Date]", dateOnly(agreement.contractDate)],
+    ["[Work Start Date]", dateOnly(agreement.workStartDate)],
+    ["[Work End Date]", dateOnly(agreement.workEndDate)],
+    ["[Termination Notice Period]", agreement.terminationNoticePeriod],
+    ["[SOW Number]", agreement.sowNumber],
+    ["[Services To Be Rendered]", agreement.services],
+    ["[FTE Hours]", agreement.fteHours],
+    ["[Compensation Amount]", agreement.compensation],
+    ["[Denomination Type]", agreement.denominationType],
+    ["[Denomination Currency]", agreement.denominationCurrency],
+  ];
+  for (const [token, value] of optional) {
+    if (value) replacements.push({ token, value });
+  }
+
+  template = applyReplacements(template, replacements);
+  return appendPlaceholderReport(template, "Contributor Agreement");
 }

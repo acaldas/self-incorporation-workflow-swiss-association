@@ -39,15 +39,15 @@ The Parties shall use their commercially reasonable efforts to collaborate in re
 
 ## 4. COMMENCEMENT AND TERM
 
-The CONTRACTOR shall commence Services as a [Contractor Title] for the OH on [Work Start Date] and shall continue thereafter until [Work End Date]
-
-OR
-
-[the completion of the Services under all Statements of Work]
-
-OR
-
-Either Party may terminate this Agreement or any Statement of Work with immediate effect, without cause, by providing at least [Termination Notice Period] calendar days’ prior written notice to the other Party.
+<!-- TERM:FIXED_DATE -->
+The CONTRACTOR shall commence Services as a [Contractor Title] for the OH on [Work Start Date] and shall continue thereafter until [Work End Date].
+<!-- /TERM:FIXED_DATE -->
+<!-- TERM:ON_SOW_COMPLETION -->
+The CONTRACTOR shall commence Services as a [Contractor Title] for the OH on [Work Start Date] and shall continue thereafter until the completion of the Services under all Statements of Work.
+<!-- /TERM:ON_SOW_COMPLETION -->
+<!-- TERM:NOTICE -->
+The CONTRACTOR shall commence Services as a [Contractor Title] for the OH on [Work Start Date]. Either Party may terminate this Agreement or any Statement of Work with immediate effect, without cause, by providing at least [Termination Notice Period] calendar days’ prior written notice to the other Party.
+<!-- /TERM:NOTICE -->
 
 Upon expiration or termination of this Agreement for any reason, the CONTRACTOR shall promptly:
 

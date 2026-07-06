@@ -14,10 +14,21 @@ function defaultGeneratedDocument() {
   };
 }
 
+// Document instances created before this collection existed have no value for
+// it at runtime, even though the schema types it as a non-null array. Coerce to
+// an empty array before any access so legacy documents don't crash.
+function ensureAgreements(state: {
+  contributorAgreements: ContributorAgreement[];
+}): void {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (!state.contributorAgreements) state.contributorAgreements = [];
+}
+
 function findAgreement(
   state: { contributorAgreements: ContributorAgreement[] },
   id: string,
 ): ContributorAgreement {
+  ensureAgreements(state);
   const agreement = state.contributorAgreements.find((a) => a.id === id);
   if (!agreement)
     throw new ContributorAgreementNotFoundError(
@@ -29,6 +40,7 @@ function findAgreement(
 export const swissAssociationContributorsOperations: SwissAssociationContributorsOperations =
   {
     addContributorAgreementOperation(state, action) {
+      ensureAgreements(state);
       if (state.contributorAgreements.some((a) => a.id === action.input.id))
         throw new DuplicateContributorAgreementError(
           `Contributor agreement ${action.input.id} already exists`,
@@ -98,6 +110,7 @@ export const swissAssociationContributorsOperations: SwissAssociationContributor
         agreement.denominationCurrency = action.input.denominationCurrency;
     },
     removeContributorAgreementOperation(state, action) {
+      ensureAgreements(state);
       const idx = state.contributorAgreements.findIndex(
         (a) => a.id === action.input.id,
       );
