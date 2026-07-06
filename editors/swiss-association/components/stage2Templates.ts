@@ -15,7 +15,8 @@ function formatList(items: string[]) {
 }
 
 function formatDate(date: string | null | undefined) {
-  return date || new Date().toISOString().slice(0, 10);
+  // Date scalars are stored as full ISO datetimes; render date-only (yyyy-mm-dd).
+  return (date || new Date().toISOString()).slice(0, 10);
 }
 
 function formatMemberLine(
@@ -134,39 +135,47 @@ function stripAoaPreamble(template: string): string {
   return tableStart > 0 ? template.slice(tableStart) : template;
 }
 
-function buildSignaturePage(
-  associationName: string,
-  date: string,
-  city: string,
-  boardMembers: { name: string; nationalityOrCountry: string }[],
+interface Signatory {
+  name: string;
+  role: string;
+  note?: string;
+}
+
+// The ONE signature convention shared by every generated document: an
+// "## Signatures" section (which starts on a fresh page in print) followed by
+// one page-break-protected block per signatory — name, role, an optional note
+// (nationality / "represented by …"), and a signature / date / place line. The
+// <!-- SIG --> markers become break-inside:avoid containers in the shared
+// renderer, so no single signer is ever split across pages.
+const SIG_LINE =
+  "Signature: ______________________________   Date: ________________   Place: ________________";
+
+function buildSignatureSection(
+  intro: string,
+  signatories: Signatory[],
 ): string {
-  const signerBlocks = boardMembers
-    .map(
-      (m) => `---
+  const list =
+    signatories.length > 0 ? signatories : [{ name: "", role: "Signatory" }];
+  const blocks = list
+    .map((s) => {
+      const noteLine = s.note ? `\n${s.note}` : "";
+      return `<!-- SIG -->
+**${s.name || " "}**
+${s.role}${noteLine}
 
-**${m.name}**
-Board Member · ${m.nationalityOrCountry}
-
-Signature: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Place: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-`,
-    )
-    .join("\n");
+${SIG_LINE}
+<!-- /SIG -->`;
+    })
+    .join("\n\n");
 
   return `
 
----
+## Signatures
 
-# Signature Page
+${intro}
 
-## Articles of Association of ${associationName}
-
-The undersigned board members hereby confirm their adoption of the Articles of Association of **${associationName}**, executed on **${date}** in **${city}**, Switzerland.
-
-${signerBlocks}`;
+${blocks}
+`;
 }
 
 // --- English-only AoA output (MVP) ------------------------------------------
@@ -249,11 +258,18 @@ export function buildAoaMarkdown(state: SwissAssociationState) {
     )}\n`;
   }
 
-  // Append professional signature page for board members
+  // Append the shared signature section for board members.
   const signers = state.boardMembers?.length
     ? state.boardMembers
     : state.members || [];
-  template += buildSignaturePage(associationName, date, city, signers);
+  template += buildSignatureSection(
+    `The undersigned board members hereby adopt the Articles of Association of **${associationName}**, executed on **${date}** in **${city}**, Switzerland.`,
+    signers.map((m) => ({
+      name: m.name,
+      role: "Board Member",
+      note: m.nationalityOrCountry,
+    })),
+  );
 
   return appendPlaceholderReport(template, "AoA");
 }
@@ -383,55 +399,17 @@ export function buildFoundingMinutesMarkdown(state: SwissAssociationState) {
   template =
     `# ${associationName} \u2014 Founding Meeting Minutes\n\n` + template;
 
-  // Append professional signature page
-  template += `
-
----
-
-# Signature Page
-
-## ${associationName} — Founding Meeting Minutes
-
-The undersigned hereby confirm the founding meeting of **${associationName}**, held on **${date}**.
-
----
-
-**${chairName}**
-Chair of the Founding Meeting
-
-Signature: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Place: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
----
-
-**${secretaryName}**
-Secretary of the Founding Meeting
-
-Signature: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Place: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-`;
-
-  // Optional local counsel signature block — only when counsel was named.
-  if (counselName) {
-    template += `
----
-
-**${counselName}**
-Local Counsel
-
-Signature: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Place: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-`;
-  }
+  // Shared signature section. Local counsel signs only when one was named.
+  const minutesSignatories: Signatory[] = [
+    { name: chairName, role: "Chair of the Founding Meeting" },
+    { name: secretaryName, role: "Secretary of the Founding Meeting" },
+  ];
+  if (counselName)
+    minutesSignatories.push({ name: counselName, role: "Local Counsel" });
+  template += buildSignatureSection(
+    `The undersigned hereby confirm the founding meeting of **${associationName}**, held on **${date}**.`,
+    minutesSignatories,
+  );
 
   return appendPlaceholderReport(template, "Founding Meeting Minutes");
 }
@@ -469,47 +447,19 @@ export function buildRegulationGAMarkdown(state: SwissAssociationState) {
     .replace("Signatory 1 (Role = chair]", chairName)
     .replace("Signatory 2 (Role = secretary)", secretaryName);
 
-  // Append professional signature page
-  const sigPage = `
+  template += buildSignatureSection(
+    `Approved by the General Assembly of **${associationName}** on **${date}**.`,
+    [
+      { name: chairName, role: "Chair of the General Assembly" },
+      { name: secretaryName, role: "Secretary of the General Assembly" },
+    ],
+  );
 
----
-
-# Signature Page
-
-## ${associationName} — Regulation of the General Assembly
-
-Approved by the General Assembly on **${date}**.
-
----
-
-**${chairName}**
-Chair of the General Assembly
-
-Signature: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Place: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
----
-
-**${secretaryName}**
-Secretary of the General Assembly
-
-Signature: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-Place: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-`;
-
-  template += sigPage;
   return appendPlaceholderReport(template, "Regulation GA");
 }
 
 export function buildMpaMarkdown(state: SwissAssociationState) {
   const associationName = state.nameEn || state.nameDe || "Association";
-  const boardMembers = toBoardMemberLines(state);
   const multisig = state.multisig;
   const activeSigner = state.boardMembers?.[0] || state.members?.[0];
   let template = applyReplacements(mpaV2TemplateRaw, [
@@ -560,8 +510,18 @@ export function buildMpaMarkdown(state: SwissAssociationState) {
     },
   ]);
 
-  // Add explicit generated signer roster at the end.
-  template += `\n\n## Generated Signer Roster\n${formatList(boardMembers)}\n`;
+  // Shared signature section for the active signers (the Association's board).
+  const mpaSigners = state.boardMembers?.length
+    ? state.boardMembers
+    : state.members || [];
+  template += buildSignatureSection(
+    `Executed by **${associationName}** and the Active Signers listed below.`,
+    mpaSigners.map((m) => ({
+      name: m.name,
+      role: "Active Signer",
+      note: m.nationalityOrCountry,
+    })),
+  );
   return appendPlaceholderReport(template, "MPA v2");
 }
 
@@ -601,7 +561,6 @@ export function buildDissolutionResolutionMarkdown(
     ? formLabels[d.resolutionForm]
     : "Physical / Virtual / Written (Urabstimmung)";
   const recipient = d?.assetRecipient || "[Insert recipient]";
-  const signers = (state.members || []).map((m) => m.name);
 
   let template = applyReplacements(dissolutionResolutionTemplateRaw, [
     { token: "[Association Name]", value: associationName },
@@ -610,16 +569,12 @@ export function buildDissolutionResolutionMarkdown(
     { token: "[Insert recipient]", value: recipient },
   ]);
 
-  const sigBlock =
-    signers.length > 0
-      ? signers
-          .map(
-            (name) =>
-              `Name: ${name}    Signature: ____________________    Date: __________`,
-          )
-          .join("\n\n")
-      : "Name: ____________________    Signature: ____________________    Date: __________";
-  template = template.split("[Signatures]").join(sigBlock);
+  // Drop the template's inline signature placeholder; append the shared section.
+  template = template.split("[Signatures]").join("");
+  template += buildSignatureSection(
+    `The undersigned members hereby resolve the dissolution of **${associationName}**, effective **${date}**.`,
+    (state.members || []).map((m) => ({ name: m.name, role: "Member" })),
+  );
 
   return appendPlaceholderReport(template, "Dissolution Resolution");
 }
@@ -677,6 +632,37 @@ export function buildContributorAgreementMarkdown(
   ];
   const ohAgent = state.chairName || state.secretaryName;
   if (ohAgent) replacements.push({ token: "[OH Agent]", value: ohAgent });
+
+  // Replace the template's in-line signature table with the shared signature
+  // section (kept in place, before the schedules). The OH and the contractor
+  // each sign; entity contractors sign through their named agent.
+  const contractorName = agreement.contractorIsEntity
+    ? agreement.entityName || "Contractor Entity"
+    : agreement.contractorName || "Contractor";
+  const contractorNote =
+    agreement.contractorIsEntity && agreement.contractorName
+      ? `Represented by ${agreement.contractorName}`
+      : undefined;
+  const sigSection = buildSignatureSection(
+    `Executed by the Parties on ${dateOnly(agreement.contractDate) || "the date written below"}.`,
+    [
+      {
+        name: associationName,
+        role: "Operational Hub",
+        note: ohAgent ? `Represented by ${ohAgent}` : undefined,
+      },
+      { name: contractorName, role: "Contractor", note: contractorNote },
+    ],
+  );
+  const sigStart = template.indexOf("IN WITNESS WHEREOF");
+  const schedStart = template.indexOf("## List of Schedules");
+  if (sigStart !== -1 && schedStart > sigStart) {
+    template =
+      template.slice(0, sigStart) +
+      sigSection.trim() +
+      "\n\n" +
+      template.slice(schedStart);
+  }
 
   // 3. Contractor tokens come from the agreement. Only push a replacement when
   //    the value is present, so unset tokens survive into the placeholder
