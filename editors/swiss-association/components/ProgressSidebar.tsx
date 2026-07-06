@@ -64,20 +64,23 @@ function isStepDone(step: number, p: StageProgress): boolean {
   }
 }
 
+// Stage milestones mirror the capability-flow diagram, keyed on the same flags.
 function stageMilestone(
   stageNumber: number,
   p: StageProgress,
 ): MilestoneData | undefined {
-  const constituted = p.aoaSigned && p.minutesSigned;
   switch (stageNumber) {
     case 2:
-      return { title: "Entity legally constituted", reached: constituted };
+      // Incorporation complete → the entity legally exists (shell-complete).
+      return { title: "Exists as a legal person", reached: p.minutesSigned };
     case 3:
-      return {
-        title: "Entity enabled to pay and get paid",
-        reached: constituted && (p.mpaSigned || !p.hasMultisig),
-      };
+      // Defined by the multisig; the MPA is additive and does not gate it.
+      return { title: "Can hold & move money", reached: p.hasMultisig };
     case 4:
+      // Keyed on a signed contributor agreement (step 9), which is not built
+      // yet — so this stays available (not reached), honestly.
+      return { title: "Can contract people", reached: false };
+    case 5:
       return { title: "Entity dissolved", reached: p.dissolutionSigned };
     default:
       return undefined;
@@ -353,8 +356,12 @@ export function ProgressSidebar({
 }: ProgressSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
-  // Overall progress counts steps across the incorporation stages (1–3).
-  const incorporationSteps = STAGES.filter((s) => s.number <= 3).flatMap(
+  // Overall progress tracks only the required path to legal existence
+  // (Pre-Incorporation + Incorporation, stages 1–2). Optional onward
+  // capabilities — Treasury & Governance, Supplier & Contributor, Dissolution —
+  // are NOT counted, so a shell entity that stops at "Exists as a legal person"
+  // reads as complete rather than deficient.
+  const incorporationSteps = STAGES.filter((s) => s.number <= 2).flatMap(
     (s) => s.steps,
   );
   const completed = incorporationSteps.filter((s) =>

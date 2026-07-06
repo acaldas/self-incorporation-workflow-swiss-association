@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ProgressSidebar } from "./ProgressSidebar.js";
 import type { StageProgress } from "./ProgressSidebar.js";
+import { CapabilityFlow } from "./CapabilityFlow.js";
 
 interface WizardLayoutProps {
   currentStep: number;
@@ -61,6 +62,9 @@ export function WizardLayout({
           />
         )}
       </div>
+
+      {/* Full-width capability summary — hub-and-spokes, below the content. */}
+      {stageProgress && <CapabilityFlow progress={stageProgress} />}
     </div>
   );
 }
