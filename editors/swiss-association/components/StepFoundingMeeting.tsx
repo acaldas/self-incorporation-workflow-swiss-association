@@ -11,9 +11,9 @@ import { buildFoundingMinutesMarkdown } from "./stage2Templates.js";
 interface Props {
   state: SwissAssociationState;
   dispatch: DocumentDispatch<SwissAssociationAction>;
+  // Once the minutes are signed (M1), continue to the milestone page.
   onNext: () => void;
   onBack: () => void;
-  onOpenAoa?: () => void;
 }
 
 export function StepFoundingMeeting({
@@ -21,7 +21,6 @@ export function StepFoundingMeeting({
   dispatch,
   onNext,
   onBack,
-  onOpenAoa,
 }: Props) {
   const [chairName, setChairName] = useState(state.chairName ?? "");
   const [secretaryName, setSecretaryName] = useState(state.secretaryName ?? "");
@@ -53,9 +52,6 @@ export function StepFoundingMeeting({
     chairName.trim() !== "" &&
     secretaryName.trim() !== "" &&
     (meetingIsOnline || meetingVenue.trim() !== "");
-  const phaseAComplete =
-    state.aoaDocument?.isSigned === true &&
-    state.foundingMinutesDocument?.isSigned === true;
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -144,41 +140,19 @@ export function StepFoundingMeeting({
       </SectionCard>
 
       {rolesSaved && (
-        <>
-          {phaseAComplete && (
-            <div className="p-5 bg-green-50 border border-green-300 rounded-xl">
-              <p className="text-base font-semibold text-green-900">
-                The Association {state.nameEn || state.nameDe || "Association"}{" "}
-                is now officially incorporated.
-              </p>
-              <p className="text-sm text-green-800 mt-1">
-                Both the Articles of Association and Founding Meeting Minutes
-                have been executed.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {onOpenAoa && (
-                  <button onClick={onOpenAoa} className="sw-btn-secondary">
-                    Open Executed Articles of Association
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          <Stage2DocumentStep
-            title="Founding Meeting Minutes"
-            description="Review the Founding Meeting Minutes generated from the data you provided. Sign to confirm the official record of the founding."
-            documentType="FOUNDING_MINUTES"
-            dispatch={dispatch}
-            documentState={state.foundingMinutesDocument}
-            generateMarkdown={() => buildFoundingMinutesMarkdown(state)}
-            onBack={onBack}
-            onNext={onNext}
-            nextLabel="Continue to Workflow Status →"
-            nextRequiresSigned={true}
-            lockedHint="The Founding Meeting Minutes are now locked and cannot be edited."
-          />
-        </>
+        <Stage2DocumentStep
+          title="Founding Meeting Minutes"
+          description="Review the Founding Meeting Minutes generated from the data you provided. Sign to confirm the official record of the founding."
+          documentType="FOUNDING_MINUTES"
+          dispatch={dispatch}
+          documentState={state.foundingMinutesDocument}
+          generateMarkdown={() => buildFoundingMinutesMarkdown(state)}
+          onBack={onBack}
+          onNext={onNext}
+          nextLabel="Continue →"
+          nextRequiresSigned={true}
+          lockedHint="The Founding Meeting Minutes are now locked and cannot be edited."
+        />
       )}
     </div>
   );

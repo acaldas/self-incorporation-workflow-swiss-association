@@ -72,6 +72,7 @@ function stageMilestone(
   switch (stageNumber) {
     case 2:
       // Incorporation complete → the entity legally exists (shell-complete).
+      // Wording kept identical to the CapabilityFlow SVG node.
       return { title: "Exists as a legal person", reached: p.minutesSigned };
     case 3:
       // Defined by the multisig; the MPA is additive and does not gate it.
@@ -82,6 +83,10 @@ function stageMilestone(
       return { title: "Can contract people", reached: false };
     case 5:
       return { title: "Entity dissolved", reached: p.dissolutionSigned };
+    case 6:
+      // Operational (coming soon) — mirrors the CapabilityFlow node. Never
+      // reached in the MVP (needs a tax ID + registered domicile provider).
+      return { title: "Can invoice & get paid, compliantly", reached: false };
     default:
       return undefined;
   }
@@ -281,6 +286,34 @@ function StageCard({
   const fraction = totalCount > 0 ? completedCount / totalCount : 0;
   const milestone = stageMilestone(stage.number, progress);
 
+  // Coming-soon: a muted, non-interactive placeholder card. Reads as an
+  // optional onward capability that isn't built yet — not an incomplete step.
+  if (stage.comingSoon) {
+    return (
+      <div className="border border-dashed border-slate-200 rounded-xl p-2.5 bg-slate-50 opacity-75">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-1.5">
+            <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 bg-slate-100 text-slate-400">
+              <span aria-hidden="true">⋯</span>
+            </div>
+            <span className="text-[11px] font-semibold text-slate-400">
+              {stage.name}
+            </span>
+          </div>
+          <span className="text-[9px] font-semibold px-1.5 py-px rounded-full bg-slate-200 text-slate-500">
+            {stage.comingSoonBadge ?? "Coming soon"}
+          </span>
+        </div>
+        {stage.description && (
+          <p className="text-[10px] leading-snug text-slate-400 mt-1">
+            {stage.description}
+          </p>
+        )}
+        {milestone && <MilestoneCard milestone={milestone} dimmed />}
+      </div>
+    );
+  }
+
   return (
     <div className={`border rounded-xl p-2.5 ${CARD_BG[status]}`}>
       {/* Header row */}
@@ -343,12 +376,14 @@ interface ProgressSidebarProps {
   progress: StageProgress;
   currentStep: number;
   onStepClick: (step: number) => void;
+  onOpenArchive: () => void;
 }
 
 export function ProgressSidebar({
   progress,
   currentStep,
   onStepClick,
+  onOpenArchive,
 }: ProgressSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -369,6 +404,9 @@ export function ProgressSidebar({
   // A stage is current when the user is on one of its steps. It is never
   // "current" by default — Stage 4 (Dissolution) included.
   function getStageStatus(stage: StageDef, index: number): Status {
+    // Coming-soon stages are muted placeholders — checked first, since an empty
+    // step list would otherwise read as vacuously "done".
+    if (stage.comingSoon) return "locked";
     if (stageAllDone(stage, progress)) return "done";
     if (stage.steps.some((s) => s.number === currentStep)) return "current";
     // Optional capability branches (Treasury, Supplier & Contributor,
@@ -459,6 +497,16 @@ export function ProgressSidebar({
           />
         ))}
       </div>
+
+      {/* Persistent access to the executed-documents archive — reachable from
+          any step, independent of the founding flow. */}
+      <button
+        onClick={onOpenArchive}
+        className="mt-4 mb-4 w-full flex items-center gap-2 px-2.5 py-2 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+      >
+        <span aria-hidden="true">🗂️</span>
+        Executed documents
+      </button>
     </aside>
   );
 }

@@ -12,6 +12,9 @@ import { StepAssociationDetails } from "./components/StepAssociationDetails.js";
 import { StepMemberRegistry } from "./components/StepMemberRegistry.js";
 import { StepBoardSetup } from "./components/StepBoardSetup.js";
 import { StepFoundingMeeting } from "./components/StepFoundingMeeting.js";
+import { TreasuryGateway } from "./components/TreasuryGateway.js";
+import { MilestonePage } from "./components/MilestonePage.js";
+import { StepFinalArchive } from "./components/StepFinalArchive.js";
 import { StepMultisigConfig } from "./components/StepMultisigConfig.js";
 import { StepArticlesOfAssociation } from "./components/StepArticlesOfAssociation.js";
 import { StepMultisigParticipationAgreement } from "./components/StepMultisigParticipationAgreement.js";
@@ -25,19 +28,39 @@ import { isStepLocked } from "./components/stages.js";
 export default function Editor() {
   const [document, dispatch] = useSelectedSwissAssociationDocument();
   const [currentStep, setCurrentStep] = useState(0);
+  // Where the archive returns to — set when it's opened from any step.
+  const [archiveReturnStep, setArchiveReturnStep] = useState(0);
+  // The gateway's no-treasury choice (local, like the gateway itself). Drives
+  // the enriched "deliberately minimal" capability view.
+  const [noTreasury, setNoTreasury] = useState(false);
 
   const state = document.state.global;
   const safeDispatch = dispatch;
 
   // Optional Suitability side-screen, reachable from Welcome (not a numbered step).
   const SUITABILITY_STEP = -1;
+  // Post-founding treasury gateway — its own page, reached from the founding
+  // step once M1 is signed. Not a numbered sidebar step.
+  const GATEWAY_STEP = -2;
+  // Dedicated M1 milestone screen, shown once between founding and the gateway.
+  const MILESTONE_STEP = -3;
+  // Executed-documents archive — reachable from any step and the milestone page.
+  const ARCHIVE_STEP = -4;
+
+  // Open the archive, remembering where to return (unless already there).
+  function openArchive() {
+    if (currentStep !== ARCHIVE_STEP) setArchiveReturnStep(currentStep);
+    setCurrentStep(ARCHIVE_STEP);
+  }
 
   const stageProgress: StageProgress = {
+    // Registered address is optional (a domicile provider can supply it later),
+    // so it must NOT gate step-1 completion — only name, purpose, city + canton.
     detailsDone: !!(
       state.nameEn &&
+      state.purposeEn &&
       state.seatCity &&
-      state.registeredAddress &&
-      state.purposeEn
+      state.seatCanton
     ),
     membersDone: state.members.length >= 2,
     boardDone: (state.boardMembers?.length ?? 0) >= 1,
@@ -116,21 +139,26 @@ export default function Editor() {
           />
         );
       case 5:
+        // Multisig (step 6) leaves the required chain — Reg GA flows straight
+        // to the founding meeting (step 7). Step 6 is reached only via the
+        // post-founding gateway or the optional-branch sidebar.
         return (
           <StepRegulationGA
             state={state}
             dispatch={safeDispatch}
             onBack={() => setCurrentStep(4)}
-            onNext={() => setCurrentStep(6)}
+            onNext={() => setCurrentStep(7)}
           />
         );
       case 6:
+        // Back returns to the treasury gateway it was launched from; forward
+        // continues to the Multisig Participation Agreement (step 8).
         return (
           <StepMultisigConfig
             state={state}
             dispatch={safeDispatch}
-            onNext={() => setCurrentStep(7)}
-            onBack={() => setCurrentStep(5)}
+            onNext={() => setCurrentStep(8)}
+            onBack={() => setCurrentStep(GATEWAY_STEP)}
           />
         );
       case 7:
@@ -138,16 +166,40 @@ export default function Editor() {
           <StepFoundingMeeting
             state={state}
             dispatch={safeDispatch}
-            onNext={() => {
+            onNext={() => setCurrentStep(MILESTONE_STEP)}
+            onBack={() => setCurrentStep(5)}
+          />
+        );
+      case MILESTONE_STEP:
+        return (
+          <MilestonePage
+            state={state}
+            onContinue={() => setCurrentStep(GATEWAY_STEP)}
+            onOpenArchive={openArchive}
+            onBack={() => setCurrentStep(7)}
+          />
+        );
+      case ARCHIVE_STEP:
+        return (
+          <StepFinalArchive
+            state={state}
+            onBack={() => setCurrentStep(archiveReturnStep)}
+          />
+        );
+      case GATEWAY_STEP:
+        return (
+          <TreasuryGateway
+            state={state}
+            onSetupMultisig={() => {
               if (!state.stage2Started) {
                 safeDispatch(
                   actions.startStage_2({ startedAt: new Date().toISOString() }),
                 );
               }
-              setCurrentStep(8);
+              setCurrentStep(6);
             }}
-            onBack={() => setCurrentStep(6)}
-            onOpenAoa={() => setCurrentStep(4)}
+            onNoTreasuryChange={setNoTreasury}
+            onBack={() => setCurrentStep(MILESTONE_STEP)}
           />
         );
       case 8:
@@ -263,6 +315,8 @@ export default function Editor() {
         currentStep={currentStep}
         onStepClick={handleStepClick}
         stageProgress={stageProgress}
+        onOpenArchive={openArchive}
+        shieldCo={noTreasury}
       >
         {isCurrentStepLocked ? (
           <ReadOnlyStepWrapper>{renderStep()}</ReadOnlyStepWrapper>
